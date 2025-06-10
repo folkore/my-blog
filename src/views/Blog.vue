@@ -1,5 +1,25 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed, watch, onUnmounted } from "vue";
+import { useI18n } from "vue-i18n";
+import SearchBar from "../components/SearchBar.vue";
+import TagFilter from "../components/TagFilter.vue";
+
+const { t, locale } = useI18n();
+
+// 监听语言变化事件
+const handleLanguageChanged = () => {
+  // 强制组件重新渲染
+  forceUpdate.value = !forceUpdate.value;
+};
+
+// 用于强制组件重新渲染的标志
+const forceUpdate = ref(false);
+
+// 监听语言变化
+watch(locale, () => {
+  // 强制组件重新渲染
+  forceUpdate.value = !forceUpdate.value;
+});
 
 // 模拟博客文章数据
 const blogPosts = ref([
@@ -41,6 +61,9 @@ const blogPosts = ref([
 const isLoading = ref(false);
 
 onMounted(() => {
+  // 添加语言变化事件监听
+  window.addEventListener("language-changed", handleLanguageChanged);
+
   // 模拟加载
   isLoading.value = true;
   setTimeout(() => {
@@ -51,161 +74,299 @@ onMounted(() => {
   // fetchBlogPosts();
 });
 
-// 跳转到博客文章详情
-const navigateToBlogPost = (id) => {
-  // 使用路由导航到文章详情页
+onUnmounted(() => {
+  // 移除语言变化事件监听
+  window.removeEventListener("language-changed", handleLanguageChanged);
+});
+
+// 搜索和筛选
+const searchQuery = ref("");
+const selectedTags = ref([]);
+const currentPage = ref(1);
+const postsPerPage = 6;
+
+// 获取所有标签
+const allTags = computed(() => {
+  const tags = [];
+  blogPosts.value.forEach((post) => {
+    post.tags.forEach((tag) => tags.push(tag));
+  });
+  return tags;
+});
+
+// 根据搜索和标签筛选文章
+const filteredPosts = computed(() => {
+  let result = blogPosts.value;
+
+  // 搜索筛选
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    result = result.filter(
+      (post) =>
+        post.title.toLowerCase().includes(query) ||
+        post.summary.toLowerCase().includes(query) ||
+        post.tags.some((tag) => tag.toLowerCase().includes(query))
+    );
+  }
+
+  // 标签筛选
+  if (selectedTags.value.length > 0) {
+    result = result.filter((post) =>
+      post.tags.some((tag) => selectedTags.value.includes(tag))
+    );
+  }
+
+  return result;
+});
+
+// 分页相关
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredPosts.value.length / postsPerPage))
+);
+
+const paginatedPosts = computed(() => {
+  const start = (currentPage.value - 1) * postsPerPage;
+  const end = start + postsPerPage;
+  return filteredPosts.value.slice(start, end);
+});
+
+// 处理搜索
+const handleSearch = (query) => {
+  searchQuery.value = query;
+  currentPage.value = 1; // 重置页码
+};
+
+// 分页方法
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
 };
 </script>
 
 <template>
-  <div class="blog-page container">
+  <div class="blog">
+    <!-- 页面头部 -->
     <header class="page-header">
-      <h1>博客文章</h1>
-      <p class="subtitle">分享我的思考、经验和知识</p>
+      <div class="container">
+        <h1 class="page-title">{{ t("blog.title") }}</h1>
+        <p class="page-description">分享我的技术见解和开发经验</p>
+      </div>
+      <div class="header-background">
+        <div class="header-shape-1"></div>
+        <div class="header-shape-2"></div>
+      </div>
     </header>
 
-    <div v-if="isLoading" class="loading-container">
-      <div class="loading-spinner"></div>
-      <p>加载文章中...</p>
-    </div>
+    <!-- 文章筛选器 -->
+    <section class="filter-section">
+      <div class="container">
+        <div class="filters">
+          <!-- 搜索框组件 -->
+          <SearchBar :placeholder="t('blog.search')" @search="handleSearch" />
 
-    <section v-else class="blog-posts">
-      <article
-        v-for="post in blogPosts"
-        :key="post.id"
-        class="blog-post-card"
-        @click="$router.push(`/blog/${post.id}`)"
-      >
-        <div class="post-image">
-          <img :src="post.cover" :alt="post.title" />
+          <!-- 标签筛选组件 -->
+          <TagFilter :tags="allTags" v-model:selectedTags="selectedTags" />
         </div>
-        <div class="post-content">
-          <div class="post-date">{{ post.date }}</div>
-          <h2 class="post-title">{{ post.title }}</h2>
-          <p class="post-summary">{{ post.summary }}</p>
-          <div class="post-tags">
-            <span
-              v-for="(tag, index) in post.tags"
-              :key="index"
-              class="post-tag"
-            >
-              {{ tag }}
-            </span>
-          </div>
-          <div class="read-more">阅读更多 →</div>
-        </div>
-      </article>
+      </div>
     </section>
 
-    <div v-if="!isLoading && blogPosts.length === 0" class="empty-state">
-      <p>暂无博客文章</p>
-    </div>
+    <!-- 文章列表 -->
+    <section class="posts-section">
+      <div class="container">
+        <!-- 加载状态 -->
+        <div v-if="isLoading" class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>加载中...</p>
+        </div>
+
+        <!-- 无结果提示 -->
+        <div v-else-if="filteredPosts.length === 0" class="no-results">
+          <p>{{ t("blog.noResults") }}</p>
+        </div>
+
+        <!-- 文章列表 -->
+        <div v-else class="posts-grid">
+          <article
+            v-for="post in paginatedPosts"
+            :key="post.id"
+            class="post-card"
+          >
+            <div class="post-image">
+              <img v-lazy="post.cover" :alt="post.title" />
+            </div>
+            <div class="post-content">
+              <div class="post-tags">
+                <span
+                  v-for="(tag, index) in post.tags"
+                  :key="index"
+                  class="post-tag"
+                >
+                  {{ tag }}
+                </span>
+              </div>
+              <h2 class="post-title">{{ post.title }}</h2>
+              <p class="post-excerpt">{{ post.summary }}</p>
+              <div class="post-meta">
+                <div class="meta-left">
+                  <span class="post-date">{{ post.date }}</span>
+                </div>
+                <router-link :to="'/blog/' + post.id" class="post-link">
+                  {{ t("home.latestPosts.readMore") }}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </router-link>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <!-- 分页 -->
+        <div v-if="filteredPosts.length > 0" class="pagination">
+          <button
+            class="pagination-button"
+            :disabled="currentPage === 1"
+            @click="prevPage"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            上一页
+          </button>
+          <span class="page-info">
+            第 {{ currentPage }} 页，共 {{ totalPages }} 页
+          </span>
+          <button
+            class="pagination-button"
+            :disabled="currentPage === totalPages"
+            @click="nextPage"
+          >
+            下一页
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
-.blog-page {
-  padding: 60px 0;
+.blog {
+  min-height: 100vh;
 }
 
+/* 页面头部 */
 .page-header {
-  text-align: center;
-  margin-bottom: 60px;
-}
-
-.page-header h1 {
-  font-size: 48px;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 16px;
-}
-
-.subtitle {
-  font-size: 20px;
-  color: var(--color-secondary-text);
-}
-
-.blog-posts {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 30px;
-}
-
-.blog-post-card {
-  background-color: var(--color-background);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 5px 15px var(--color-shadow);
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.blog-post-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px var(--color-shadow);
-}
-
-.post-image {
-  height: 200px;
+  position: relative;
+  padding: 4rem 0;
+  background: var(--bg-secondary);
   overflow: hidden;
 }
 
-.post-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
+.page-title {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
 }
 
-.blog-post-card:hover .post-image img {
-  transform: scale(1.05);
+.page-description {
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  position: relative;
+  z-index: 1;
 }
 
-.post-content {
-  padding: 24px;
+.header-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
 }
 
-.post-date {
-  font-size: 14px;
-  color: var(--color-secondary-text);
-  margin-bottom: 8px;
+.header-shape-1,
+.header-shape-2 {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(30px);
 }
 
-.post-title {
-  font-size: 22px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  color: var(--color-text);
-  line-height: 1.3;
+.header-shape-1 {
+  width: 400px;
+  height: 400px;
+  background: var(--primary-color);
+  opacity: 0.1;
+  top: -200px;
+  right: -100px;
 }
 
-.post-summary {
-  font-size: 16px;
-  color: var(--color-secondary-text);
-  margin-bottom: 16px;
-  line-height: 1.5;
+.header-shape-2 {
+  width: 300px;
+  height: 300px;
+  background: var(--primary-hover);
+  opacity: 0.1;
+  bottom: -150px;
+  left: -50px;
 }
 
-.post-tags {
+/* 筛选器区域 */
+.filter-section {
+  padding: 2rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.filters {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.post-tag {
-  font-size: 12px;
-  background-color: var(--color-secondary-background);
-  color: var(--color-text);
-  padding: 4px 10px;
-  border-radius: 100px;
-}
-
-.read-more {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--color-link);
-  margin-top: 12px;
+/* 文章列表 */
+.posts-section {
+  padding: 3rem 0;
 }
 
 .loading-container {
@@ -213,42 +374,199 @@ const navigateToBlogPost = (id) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
+  padding: 3rem 0;
 }
 
 .loading-spinner {
-  border: 4px solid var(--color-secondary-background);
-  border-top: 4px solid var(--color-link);
-  border-radius: 50%;
   width: 40px;
   height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
+  to {
     transform: rotate(360deg);
   }
 }
 
-.empty-state {
+.no-results {
   text-align: center;
-  padding: 60px 0;
-  color: var(--color-secondary-text);
+  padding: 3rem 0;
+  color: var(--text-secondary);
 }
 
-/* 响应式调整 */
+.posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.post-card {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+}
+
+.post-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-color);
+}
+
+.post-image {
+  aspect-ratio: 16/9;
+  overflow: hidden;
+}
+
+.post-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.post-card:hover .post-image img {
+  transform: scale(1.05);
+}
+
+.post-content {
+  padding: 1.5rem;
+}
+
+.post-tags {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.post-tag {
+  padding: 0.25rem 0.75rem;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-radius: 20px;
+  font-size: 0.875rem;
+}
+
+.post-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.post-excerpt {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.post-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.meta-left {
+  display: flex;
+  gap: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.post-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.post-link svg {
+  transition: transform 0.3s ease;
+}
+
+.post-link:hover svg {
+  transform: translateX(4px);
+}
+
+/* 分页 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.pagination-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-info {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* 响应式设计 */
 @media (max-width: 768px) {
-  .blog-posts {
+  .page-title {
+    font-size: 2rem;
+  }
+
+  .page-description {
+    font-size: 1rem;
+  }
+
+  .filters {
+    gap: 1rem;
+  }
+
+  .posts-grid {
     grid-template-columns: 1fr;
   }
 
-  .page-header h1 {
-    font-size: 36px;
+  .pagination {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .pagination-button {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>

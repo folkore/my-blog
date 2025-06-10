@@ -1,11 +1,32 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import ReadingProgress from "../components/ReadingProgress.vue";
+import ShareButtons from "../components/ShareButtons.vue";
+import CommentSection from "../components/CommentSection.vue";
+import { useI18n } from "vue-i18n";
 
 const route = useRoute();
 const router = useRouter();
+const { t, locale } = useI18n();
 const isLoading = ref(true);
 const error = ref(null);
+const articleRef = ref(null);
+
+// 用于强制组件重新渲染的标志
+const forceUpdate = ref(false);
+
+// 监听语言变化
+watch(locale, () => {
+  // 强制组件重新渲染
+  forceUpdate.value = !forceUpdate.value;
+});
+
+// 监听语言变化事件
+const handleLanguageChanged = () => {
+  // 强制组件重新渲染
+  forceUpdate.value = !forceUpdate.value;
+};
 
 // 模拟单篇博客文章数据
 const blogPost = ref({
@@ -164,6 +185,9 @@ const { count, increment, decrement } = useCounter()
 
 // 在实际应用中，这里应该根据路由参数从 API 获取博客文章
 onMounted(async () => {
+  // 添加语言变化事件监听
+  window.addEventListener("language-changed", handleLanguageChanged);
+
   try {
     const postId = parseInt(route.params.id);
 
@@ -188,20 +212,41 @@ onMounted(async () => {
   }
 });
 
+onUnmounted(() => {
+  // 移除语言变化事件监听
+  window.removeEventListener("language-changed", handleLanguageChanged);
+});
+
 // 计算文章发布时间
 const formattedDate = computed(() => {
   if (!blogPost.value) return "";
   return blogPost.value.date;
 });
 
+// 计算文章阅读时间
+const calculateReadTime = (content) => {
+  // 假设平均阅读速度为每分钟200字
+  const words = content.replace(/<[^>]*>/g, "").length / 2;
+  const minutes = Math.ceil(words / 200);
+  return `${minutes} 分钟`;
+};
+
 // 返回博客列表
 const backToList = () => {
   router.push("/blog");
+};
+
+// 处理添加评论
+const handleCommentAdded = (newComment) => {
+  blogPost.value.comments.push(newComment);
 };
 </script>
 
 <template>
   <div class="blog-post-page container">
+    <!-- 文章专用阅读进度条 -->
+    <ReadingProgress target=".blog-post-content" />
+
     <!-- 加载状态 -->
     <div v-if="isLoading" class="loading-container">
       <div class="loading-spinner"></div>
@@ -215,7 +260,7 @@ const backToList = () => {
     </div>
 
     <!-- 文章内容 -->
-    <article v-else class="blog-post">
+    <article v-else class="blog-post" ref="articleRef">
       <!-- 返回按钮 -->
       <div class="back-link">
         <a @click.prevent="backToList" href="#">← 返回文章列表</a>
@@ -235,7 +280,9 @@ const backToList = () => {
           </div>
           <div class="post-details">
             <span class="post-date">{{ formattedDate }}</span>
-            <span class="post-read-time">{{ blogPost.readTime }}</span>
+            <span class="post-read-time">{{
+              calculateReadTime(blogPost.content)
+            }}</span>
           </div>
         </div>
         <div class="post-tags">
@@ -249,110 +296,58 @@ const backToList = () => {
         </div>
       </header>
 
-      <!-- 文章封面 -->
+      <!-- 文章封面图 -->
       <div class="post-cover">
-        <img :src="blogPost.cover" :alt="blogPost.title" />
+        <img
+          v-lazy="blogPost.cover"
+          :alt="blogPost.title"
+          class="cover-image"
+        />
       </div>
 
       <!-- 文章内容 -->
-      <div class="post-content" v-html="blogPost.content"></div>
+      <div class="blog-post-content" v-html="blogPost.content"></div>
+
+      <!-- 分享按钮 -->
+      <ShareButtons
+        :title="blogPost.title"
+        :description="
+          blogPost.content.replace(/<[^>]*>/g, '').substring(0, 150) + '...'
+        "
+      />
 
       <!-- 作者信息 -->
       <div class="author-bio">
         <img
-          :src="blogPost.author.avatar"
+          v-lazy="blogPost.author.avatar"
           :alt="blogPost.author.name"
           class="author-avatar"
         />
         <div class="author-details">
-          <h3>关于作者</h3>
-          <h4>{{ blogPost.author.name }}</h4>
+          <h3>{{ blogPost.author.name }}</h3>
           <p>{{ blogPost.author.bio }}</p>
         </div>
       </div>
 
       <!-- 评论区 -->
-      <section class="comments-section">
-        <h2>评论 ({{ blogPost.comments.length }})</h2>
-
-        <div v-if="blogPost.comments.length === 0" class="no-comments">
-          <p>暂无评论</p>
-        </div>
-
-        <div v-else class="comments-list">
-          <div
-            v-for="comment in blogPost.comments"
-            :key="comment.id"
-            class="comment"
-          >
-            <div class="comment-avatar">
-              <img :src="comment.avatar" :alt="comment.author" />
-            </div>
-            <div class="comment-content">
-              <div class="comment-header">
-                <h4 class="comment-author">{{ comment.author }}</h4>
-                <span class="comment-date">{{ comment.date }}</span>
-              </div>
-              <p class="comment-text">{{ comment.content }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- 评论表单 - 在实际项目中可以实现 -->
-        <div class="comment-form-container">
-          <h3>发表评论</h3>
-          <form class="comment-form">
-            <div class="form-group">
-              <label for="comment">评论</label>
-              <textarea
-                id="comment"
-                name="comment"
-                rows="4"
-                placeholder="分享你的想法..."
-                required
-              ></textarea>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="name">名字</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  placeholder="你的名字"
-                  required
-                />
-              </div>
-              <div class="form-group">
-                <label for="email">邮箱</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="你的邮箱（不会公开）"
-                  required
-                />
-              </div>
-            </div>
-            <button type="submit" class="button primary-button">
-              提交评论
-            </button>
-          </form>
-        </div>
-      </section>
+      <CommentSection
+        :comments="blogPost.comments"
+        :post-id="blogPost.id"
+        @comment-added="handleCommentAdded"
+      />
 
       <!-- 相关文章 -->
-      <section class="related-posts-section">
-        <h2>相关文章</h2>
-        <div class="related-posts">
+      <div class="related-posts">
+        <h2>{{ t("post.relatedPosts") }}</h2>
+        <div class="related-posts-grid">
           <div
             v-for="post in blogPost.relatedPosts"
             :key="post.id"
             class="related-post-card"
-            @click="$router.push(`/blog/${post.id}`)"
+            @click="router.push(`/blog/${post.id}`)"
           >
             <div class="related-post-image">
-              <img :src="post.cover" :alt="post.title" />
+              <img v-lazy="post.cover" :alt="post.title" />
             </div>
             <div class="related-post-content">
               <h3>{{ post.title }}</h3>
@@ -360,7 +355,7 @@ const backToList = () => {
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </article>
   </div>
 </template>
@@ -492,7 +487,7 @@ const backToList = () => {
   overflow: hidden;
 }
 
-.post-cover img {
+.cover-image {
   width: 100%;
   max-height: 500px;
   object-fit: cover;
