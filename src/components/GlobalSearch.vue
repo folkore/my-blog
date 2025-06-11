@@ -36,11 +36,27 @@ const searchResults = computed(() => {
     .slice(0, 5);
 });
 
-const highlight = (text, query) => {
-  if (!query) return text;
-  const regex = new RegExp(`(${query})`, "gi");
-  return text.replace(regex, '<mark class="highlight">$1</mark>');
+const highlightParts = (text, query) => {
+  if (!query) return [{ text, isHighlight: false }];
+  const parts = text.split(new RegExp(`(${query})`, "gi"));
+  return parts.map((part) => ({
+    text: part,
+    isHighlight: part.toLowerCase() === query.toLowerCase(),
+  }));
 };
+
+const getHighlightedTitle = computed(() => {
+  return searchResults.value.map((result) => ({
+    ...result,
+    titleParts: highlightParts(result.title, searchQuery.value),
+    excerptParts: result.content
+      ? highlightParts(
+          result.content.substring(0, 150) + "...",
+          searchQuery.value
+        )
+      : [],
+  }));
+});
 
 const openSearch = () => {
   isOpen.value = true;
@@ -86,7 +102,7 @@ const handleKeydown = (e) => {
   if (e.key === "Enter" && activeIndex.value >= 0) {
     e.preventDefault();
     const selectedResult = searchResults.value[activeIndex.value];
-    if (selectedResult) navigateToResult(selectedResult);
+    if (selectedResult) handleResultClick(selectedResult);
   }
 };
 
@@ -102,9 +118,9 @@ const scrollActiveIntoView = () => {
   });
 };
 
-const navigateToResult = (result) => {
+const handleResultClick = (result) => {
+  router.push(`/blog/${result.id}`);
   closeSearch();
-  router.push({ path: result.path });
 };
 
 const handleGlobalKeydown = (e) => {
@@ -222,11 +238,11 @@ defineExpose({
           <div class="search-content">
             <div v-if="searchResults.length > 0" class="search-results">
               <div
-                v-for="(result, index) in searchResults"
+                v-for="(result, index) in getHighlightedTitle"
                 :key="result.id"
                 class="search-result-item"
                 :class="{ active: index === activeIndex }"
-                @click="navigateToResult(result)"
+                @click="handleResultClick(result)"
                 @mouseover="activeIndex = index"
               >
                 <div class="result-icon">
@@ -251,20 +267,28 @@ defineExpose({
                   </svg>
                 </div>
                 <div class="result-content">
-                  <div
-                    class="result-title"
-                    v-html="highlight(result.title, searchQuery)"
-                  ></div>
-                  <div
-                    v-if="result.content"
-                    class="result-excerpt"
-                    v-html="
-                      highlight(
-                        result.content.substring(0, 150) + '...',
-                        searchQuery
-                      )
-                    "
-                  ></div>
+                  <div class="result-title">
+                    <template
+                      v-for="(part, index) in result.titleParts"
+                      :key="index"
+                    >
+                      <span v-if="part.isHighlight" class="highlight">{{
+                        part.text
+                      }}</span>
+                      <template v-else>{{ part.text }}</template>
+                    </template>
+                  </div>
+                  <div v-if="result.content" class="result-excerpt">
+                    <template
+                      v-for="(part, index) in result.excerptParts"
+                      :key="index"
+                    >
+                      <span v-if="part.isHighlight" class="highlight">{{
+                        part.text
+                      }}</span>
+                      <template v-else>{{ part.text }}</template>
+                    </template>
+                  </div>
                 </div>
               </div>
             </div>
@@ -668,5 +692,6 @@ defineExpose({
   padding: 0 2px;
   border-radius: var(--radius-sm);
   font-style: normal;
+  display: inline;
 }
 </style>

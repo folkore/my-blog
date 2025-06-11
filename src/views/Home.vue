@@ -46,13 +46,121 @@ const navigateToPost = (id) => {
   <div class="home">
     <!-- Hero Section -->
     <section class="hero">
+      <div class="hero-background">
+        <div class="hero-shape-1"></div>
+        <div class="hero-shape-2"></div>
+        <div class="hero-shape-3"></div>
+      </div>
       <div class="container">
         <div class="hero-content">
+          <div class="hero-avatar">
+            <img
+              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+              alt="头像"
+              class="avatar-image"
+            />
+          </div>
           <h1 class="hero-title">{{ t("home.hero.title") }}</h1>
           <p class="hero-description">{{ t("home.hero.description") }}</p>
-          <router-link to="/blog" class="hero-button">
-            {{ t("home.hero.browseArticles") }}
-          </router-link>
+          <div class="hero-tags">
+            <span class="hero-tag">Vue.js</span>
+            <span class="hero-tag">React</span>
+            <span class="hero-tag">Node.js</span>
+            <span class="hero-tag">TypeScript</span>
+            <span class="hero-tag">全栈开发</span>
+          </div>
+          <div class="hero-social">
+            <a
+              href="https://github.com"
+              target="_blank"
+              class="social-link"
+              title="GitHub"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+                ></path>
+              </svg>
+            </a>
+            <a
+              href="https://twitter.com"
+              target="_blank"
+              class="social-link"
+              title="Twitter"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"
+                ></path>
+              </svg>
+            </a>
+            <a
+              href="https://linkedin.com"
+              target="_blank"
+              class="social-link"
+              title="LinkedIn"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"
+                ></path>
+                <rect x="2" y="9" width="4" height="12"></rect>
+                <circle cx="4" cy="4" r="2"></circle>
+              </svg>
+            </a>
+          </div>
+          <div class="hero-buttons">
+            <router-link to="/blog" class="hero-button primary">
+              {{ t("home.hero.browseArticles") }}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </router-link>
+            <router-link to="/about" class="hero-button secondary">
+              {{ t("nav.about") }}
+            </router-link>
+          </div>
         </div>
       </div>
     </section>
@@ -80,7 +188,7 @@ const navigateToPost = (id) => {
               <p class="post-excerpt">{{ post.excerpt }}</p>
               <div class="post-meta">
                 <span class="post-date">{{ post.date }}</span>
-                <router-link :to="'/blog/' + post.id" class="post-link">
+                <router-link :to="`/blog/${post.id}`" class="post-link">
                   {{ t("home.latestPosts.readMore") }}
                 </router-link>
               </div>
@@ -175,9 +283,12 @@ const navigateToPost = (id) => {
 /* Hero Section */
 .hero {
   position: relative;
-  padding: 6rem 0;
+  padding: 8rem 0;
   overflow: hidden;
   background: var(--color-secondary-background);
+  min-height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
 }
 
 .hero-content {
@@ -188,17 +299,87 @@ const navigateToPost = (id) => {
   text-align: center;
 }
 
+.hero-avatar {
+  width: 160px;
+  height: 160px;
+  margin: 0 auto 2rem;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid var(--color-primary);
+  box-shadow: var(--shadow-lg);
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .hero-title {
   font-size: 3.5rem;
   font-weight: 800;
   line-height: 1.2;
   margin-bottom: 1.5rem;
+  background: var(--color-primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: titleFade 1s ease-out;
 }
 
 .hero-description {
   font-size: 1.25rem;
   color: var(--color-secondary-text);
   margin-bottom: 2rem;
+  animation: fadeUp 1s ease-out 0.2s both;
+}
+
+.hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  animation: fadeUp 1s ease-out 0.4s both;
+}
+
+.hero-tag {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-full);
+  background: var(--color-tertiary-background);
+  color: var(--color-secondary-text);
+  font-size: 0.875rem;
+  transition: all var(--transition-normal) var(--bezier-bounce);
+}
+
+.hero-tag:hover {
+  transform: translateY(-2px);
+  background: var(--color-primary-gradient);
+  color: white;
+}
+
+.hero-social {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  animation: fadeUp 1s ease-out 0.6s both;
+}
+
+.social-link {
+  color: var(--color-secondary-text);
+  transition: all var(--transition-normal) var(--bezier-bounce);
+}
+
+.social-link:hover {
+  color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  animation: fadeUp 1s ease-out 0.8s both;
 }
 
 .hero-button {
@@ -210,11 +391,17 @@ const navigateToPost = (id) => {
   font-weight: 500;
   text-decoration: none;
   transition: all var(--transition-normal) var(--bezier-bounce);
-  position: relative;
-  overflow: hidden;
+}
+
+.hero-button.primary {
   background: var(--color-primary-gradient);
   color: white;
   box-shadow: var(--shadow-md);
+}
+
+.hero-button.secondary {
+  background: var(--color-tertiary-background);
+  color: var(--color-text);
 }
 
 .hero-button:hover {
@@ -228,27 +415,6 @@ const navigateToPost = (id) => {
 
 .hero-button:hover svg {
   transform: translateX(4px);
-}
-
-.hero-button::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    45deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
-  transform: translateX(-100%);
-  transition: transform 0.6s var(--bezier-smooth);
-}
-
-.hero-button:hover::before {
-  transform: translateX(100%);
 }
 
 .hero-background {
@@ -266,6 +432,7 @@ const navigateToPost = (id) => {
   position: absolute;
   border-radius: 50%;
   filter: blur(var(--blur-lg));
+  animation: float 6s ease-in-out infinite;
 }
 
 .hero-shape-1 {
@@ -275,6 +442,7 @@ const navigateToPost = (id) => {
   opacity: 0.1;
   top: -100px;
   right: -100px;
+  animation-delay: 0s;
 }
 
 .hero-shape-2 {
@@ -284,6 +452,7 @@ const navigateToPost = (id) => {
   opacity: 0.1;
   bottom: -50px;
   left: -50px;
+  animation-delay: 2s;
 }
 
 .hero-shape-3 {
@@ -294,6 +463,39 @@ const navigateToPost = (id) => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  animation-delay: 4s;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes titleFade {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Latest Posts Section */
@@ -535,7 +737,7 @@ const navigateToPost = (id) => {
 /* Responsive Design */
 @media (max-width: 768px) {
   .hero {
-    padding: 4rem 0;
+    padding: 6rem 0;
   }
 
   .hero-title {
@@ -544,6 +746,20 @@ const navigateToPost = (id) => {
 
   .hero-description {
     font-size: 1.125rem;
+  }
+
+  .hero-avatar {
+    width: 120px;
+    height: 120px;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+  }
+
+  .hero-button {
+    width: 100%;
+    justify-content: center;
   }
 
   .posts-grid {

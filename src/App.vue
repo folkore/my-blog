@@ -6,6 +6,7 @@ import ReadingProgress from "./components/ReadingProgress.vue";
 import PageTransition from "./components/PageTransition.vue";
 import LanguageSwitcher from "./components/LanguageSwitcher.vue";
 import GlobalSearch from "./components/GlobalSearch.vue";
+import AppFooter from "./components/AppFooter.vue";
 import { useI18n } from "vue-i18n";
 import { usePostsStore } from "./store/index.js";
 
@@ -35,7 +36,7 @@ const handleLanguageChanged = () => {
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
-  document.body.style.overflow = isMenuOpen.value ? "hidden" : "";
+  document.body.classList.toggle("no-scroll", isMenuOpen.value);
 };
 
 const handleScroll = () => {
@@ -43,13 +44,22 @@ const handleScroll = () => {
 };
 
 onMounted(() => {
+  const scrollbarWidth =
+    window.innerWidth - document.documentElement.clientWidth;
+  document.documentElement.style.setProperty(
+    "--scrollbar-width",
+    `${scrollbarWidth}px`
+  );
+
   window.addEventListener("scroll", handleScroll);
   window.addEventListener("language-changed", handleLanguageChanged);
+  handleScroll();
 });
 
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
   window.removeEventListener("language-changed", handleLanguageChanged);
+  document.body.classList.remove("no-scroll");
   cleanup();
 });
 </script>
@@ -178,76 +188,7 @@ onUnmounted(() => {
       </router-view>
     </main>
 
-    <footer class="footer">
-      <div class="container">
-        <div class="footer-content">
-          <div class="footer-brand">
-            <div class="footer-logo">
-              <div class="brand-logo">M</div>
-              <h3>{{ t("brand.name") }}</h3>
-            </div>
-            <p>{{ t("brand.slogan") }}</p>
-            <div class="social-links">
-              <a href="https://github.com" target="_blank" class="social-link"
-                ><svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
-                  ></path></svg
-              ></a>
-              <a href="https://twitter.com" target="_blank" class="social-link"
-                ><svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"
-                  ></path></svg
-              ></a>
-            </div>
-          </div>
-          <div class="footer-links">
-            <div class="footer-section">
-              <h4>{{ t("footer.navigation") }}</h4>
-              <router-link
-                v-for="item in navItems"
-                :key="item.path"
-                :to="item.path"
-                class="footer-link"
-                >{{ item.name }}</router-link
-              >
-            </div>
-            <div class="footer-section">
-              <h4>{{ t("footer.contact") }}</h4>
-              <a href="mailto:contact@myblog.com" class="footer-link">Email</a>
-              <a href="#" class="footer-link">RSS</a>
-            </div>
-          </div>
-        </div>
-        <div class="footer-bottom">
-          <p>
-            &copy; {{ new Date().getFullYear() }} {{ t("brand.name") }}.
-            {{ t("footer.rights") }}
-          </p>
-        </div>
-      </div>
-    </footer>
+    <AppFooter :is-dark="themeMode === THEME.DARK" />
 
     <BackToTop />
     <GlobalSearch
@@ -317,6 +258,10 @@ onUnmounted(() => {
   --blur-sm: 4px;
   --blur-md: 8px;
   --blur-lg: 12px;
+
+  /* 添加 CSS 变量 */
+  --color-primary-rgb: 0, 102, 255;
+  --color-accent-rgb: 0, 212, 255;
 }
 
 .dark-theme {
@@ -608,183 +553,6 @@ body {
   z-index: 1;
 }
 
-/* 页脚样式 */
-.footer {
-  background-color: var(--color-secondary-background);
-  padding: 4rem 0 2rem;
-  border-top: 1px solid var(--color-border);
-  position: relative;
-  overflow: hidden;
-}
-
-.footer::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--color-primary-gradient);
-  opacity: 0.3;
-}
-
-.footer-content {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 4rem;
-  margin-bottom: 3rem;
-  position: relative;
-}
-
-.footer-brand {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.footer-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.footer-logo h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  background: var(--color-primary-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.social-links {
-  display: flex;
-  gap: 1rem;
-}
-
-.social-link {
-  color: var(--color-secondary-text);
-  padding: 10px;
-  border-radius: var(--radius-full);
-  transition: all var(--transition-normal) var(--bezier-bounce);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-tertiary-background);
-  position: relative;
-  overflow: hidden;
-}
-
-.social-link::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--color-primary-gradient);
-  opacity: 0;
-  transition: opacity var(--transition-normal) var(--bezier-smooth);
-}
-
-.social-link svg {
-  position: relative;
-  z-index: 1;
-  transition: all var(--transition-normal) var(--bezier-bounce);
-}
-
-.social-link:hover {
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.social-link:hover::before {
-  opacity: 1;
-}
-
-.social-link:hover svg {
-  transform: scale(1.1);
-}
-
-.footer-links {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
-}
-
-.footer-section h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  color: var(--color-text);
-  position: relative;
-  display: inline-block;
-}
-
-.footer-section h4::after {
-  content: "";
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 2rem;
-  height: 2px;
-  background: var(--color-primary-gradient);
-}
-
-.footer-link {
-  display: block;
-  color: var(--color-secondary-text);
-  text-decoration: none;
-  margin-bottom: 0.75rem;
-  transition: all var(--transition-normal) var(--bezier-bounce);
-  position: relative;
-  width: fit-content;
-}
-
-.footer-link::before {
-  content: "";
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: var(--color-primary-gradient);
-  transform: scaleX(0);
-  transform-origin: right;
-  transition: transform var(--transition-normal) var(--bezier-smooth);
-}
-
-.footer-link:hover {
-  color: var(--color-primary);
-  transform: translateX(4px);
-}
-
-.footer-link:hover::before {
-  transform: scaleX(1);
-  transform-origin: left;
-}
-
-.footer-bottom {
-  padding-top: 2rem;
-  border-top: 1px solid var(--color-border);
-  text-align: center;
-  color: var(--color-tertiary-text);
-  font-size: 0.875rem;
-  position: relative;
-}
-
-.footer-bottom::before {
-  content: "";
-  position: absolute;
-  top: -1px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 50%;
-  height: 1px;
-  background: var(--color-primary-gradient);
-  opacity: 0.3;
-}
-
 /* 页面过渡动画 */
 .page-enter-active,
 .page-leave-active {
@@ -816,8 +584,32 @@ body {
 
 /* 响应式设计 */
 @media (max-width: 1024px) {
+  .nav {
+    padding: 0 1rem;
+  }
+
+  .brand-name {
+    font-size: 1rem;
+  }
+
+  .logo {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+
+  .search-btn {
+    padding: 0.3rem 0.5rem;
+  }
+
+  .search-btn span:not(.kbd-shortcut) {
+    display: none;
+  }
+
   .nav-menu {
     display: none;
+    opacity: 0;
+    transform: translateY(-20px);
   }
 
   .nav-menu-active {
@@ -827,30 +619,127 @@ body {
     top: var(--header-height);
     left: 0;
     right: 0;
-    bottom: 0;
-    background-color: var(--color-glass-background);
-    backdrop-filter: blur(var(--blur-lg));
-    -webkit-backdrop-filter: blur(var(--blur-lg));
-    padding: 2rem;
-    transform: translateX(0);
-    transition: transform var(--transition-normal) var(--bezier-smooth);
+    height: calc(100vh - var(--header-height));
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(25px) saturate(200%);
+    -webkit-backdrop-filter: blur(25px) saturate(200%);
+    padding: 2rem 1.5rem;
+    opacity: 1;
+    transform: translateY(0);
+    transition: all var(--transition-normal) cubic-bezier(0.65, 0, 0.35, 1);
     overflow-y: auto;
-    align-items: flex-start;
+    align-items: center;
     justify-content: flex-start;
-    gap: 1rem;
+    gap: 2rem;
+    z-index: 999;
+  }
+
+  .dark-theme .nav-menu-active {
+    background: rgba(15, 23, 42, 0.95);
+  }
+
+  .nav-menu-active::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        circle at 100% 0%,
+        rgba(var(--color-primary-rgb), 0.15) 0%,
+        transparent 25%
+      ),
+      radial-gradient(
+        circle at 0% 100%,
+        rgba(var(--color-accent-rgb), 0.15) 0%,
+        transparent 25%
+      );
+    pointer-events: none;
+    opacity: 0.5;
   }
 
   .nav-links {
     flex-direction: column;
     width: 100%;
+    max-width: 360px;
+    gap: 1rem;
+    padding: 0;
+    position: relative;
   }
 
   .nav-link {
-    font-size: 1.25rem;
-    padding: 1rem;
+    font-size: 1.125rem;
+    padding: 1.25rem;
     text-align: center;
-    background: var(--color-tertiary-background);
+    background: rgba(255, 255, 255, 0.5);
     width: 100%;
+    border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+    border-radius: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+      0 2px 4px -1px rgba(0, 0, 0, 0.03),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.65, 0, 0.35, 1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--color-text);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .dark-theme .nav-link {
+    background: rgba(30, 41, 59, 0.5);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2),
+      0 2px 4px -1px rgba(0, 0, 0, 0.1),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  .nav-link::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      transparent,
+      rgba(var(--color-primary-rgb), 0.1),
+      transparent
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .nav-link:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--color-primary-rgb), 0.3);
+    box-shadow: 0 12px 20px -5px rgba(var(--color-primary-rgb), 0.15),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  }
+
+  .nav-link:hover::before {
+    opacity: 1;
+  }
+
+  .nav-link-active {
+    background: linear-gradient(
+      135deg,
+      rgba(var(--color-primary-rgb), 0.15),
+      rgba(var(--color-primary-rgb), 0.05)
+    );
+    border-color: rgba(var(--color-primary-rgb), 0.5);
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  .dark-theme .nav-link-active {
+    background: linear-gradient(
+      135deg,
+      rgba(var(--color-primary-rgb), 0.25),
+      rgba(var(--color-primary-rgb), 0.15)
+    );
   }
 
   .nav-actions {
@@ -858,9 +747,30 @@ body {
     flex-direction: column;
     gap: 1rem;
     width: 100%;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--color-border);
+    max-width: 360px;
+    margin-top: auto;
+    padding-top: 2rem;
+    position: relative;
+  }
+
+  .nav-actions::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(var(--color-primary-rgb), 0.2),
+      transparent
+    );
+  }
+
+  .nav-right {
+    gap: 0.5rem;
   }
 
   .nav-right > .desktop-search,
@@ -871,6 +781,48 @@ body {
 
   .menu-toggle {
     display: flex;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav {
+    padding: 0 0.75rem;
+  }
+
+  .logo {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+  }
+
+  .brand-name {
+    font-size: 0.875rem;
+  }
+
+  .nav-menu-active {
+    padding: 1rem;
+  }
+
+  .nav-links {
+    padding: 0.5rem 0;
+  }
+
+  .nav-link {
+    font-size: 0.875rem;
+    padding: 0.625rem;
+  }
+
+  .search-btn {
+    padding: 0.25rem 0.4rem;
+  }
+
+  .search-btn .kbd-shortcut {
+    display: none;
+  }
+
+  .nav-actions {
+    padding-top: 0.75rem;
+    gap: 0.5rem;
   }
 }
 
@@ -963,5 +915,82 @@ body {
   font-size: 0.75rem;
   line-height: 1;
   margin: 0 0.15rem;
+}
+
+.nav-menu-active .nav-link {
+  animation: slideInDown 0.5s var(--bezier-bounce) forwards;
+  opacity: 0;
+}
+
+.nav-menu-active .nav-link:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.nav-menu-active .nav-link:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.nav-menu-active .nav-link:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.nav-menu-active .nav-link:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 菜单按钮动画优化 */
+.menu-toggle {
+  position: relative;
+  z-index: 1000;
+}
+
+.menu-toggle span {
+  width: 22px;
+}
+
+.menu-active span:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+  width: 28px;
+}
+
+.menu-active span:nth-child(2) {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+.menu-active span:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+  width: 28px;
+}
+
+.nav-menu-active::-webkit-scrollbar {
+  width: 4px;
+}
+
+.nav-menu-active::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav-menu-active::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-primary-rgb), 0.2);
+  border-radius: var(--radius-full);
+}
+
+.nav-menu-active::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--color-primary-rgb), 0.3);
+}
+
+/* 添加 CSS 样式 */
+.no-scroll {
+  overflow: hidden !important;
+  padding-right: var(--scrollbar-width, 0px);
 }
 </style>

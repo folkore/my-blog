@@ -25,7 +25,7 @@ const isSubmitting = ref(false);
 const errors = ref({});
 const submitSuccess = ref(false);
 
-const t = useI18n();
+const { t } = useI18n();
 
 // 验证评论表单
 const validateForm = () => {

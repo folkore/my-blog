@@ -3,8 +3,10 @@ import { ref, onMounted, computed, watch, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import SearchBar from "../components/SearchBar.vue";
 import TagFilter from "../components/TagFilter.vue";
+import { usePostsStore } from "../store";
 
 const { t, locale } = useI18n();
+const postsStore = usePostsStore();
 
 // 监听语言变化事件
 const handleLanguageChanged = () => {
@@ -21,35 +23,8 @@ watch(locale, () => {
   forceUpdate.value = !forceUpdate.value;
 });
 
-// 模拟博客文章数据
-const blogPosts = ref([
-  {
-    id: 1,
-    title: "Vue 3 组合式 API 实践指南",
-    summary:
-      "探索 Vue 3 组合式 API 的最佳实践和使用技巧，提升代码的可维护性和复用性。",
-    cover: "https://picsum.photos/id/1/800/400",
-    date: "2024-03-15",
-    tags: ["Vue.js", "JavaScript", "前端开发"],
-  },
-  {
-    id: 2,
-    title: "构建高性能的 Web 应用",
-    summary:
-      "学习如何优化 Web 应用的性能，包括代码分割、懒加载、缓存策略等技术。",
-    cover: "https://picsum.photos/id/2/800/400",
-    date: "2024-03-10",
-    tags: ["性能优化", "Web开发", "前端开发"],
-  },
-  {
-    id: 3,
-    title: "现代 CSS 技术解析",
-    summary: "深入了解 CSS Grid、Flexbox、CSS 变量等现代 CSS 技术的应用。",
-    cover: "https://picsum.photos/id/3/800/400",
-    date: "2024-03-05",
-    tags: ["CSS", "Web开发", "前端开发"],
-  },
-]);
+// 从 store 获取博客文章
+const blogPosts = computed(() => postsStore.posts);
 
 // 在实际应用中，这里应该是从 API 获取博客文章
 const isLoading = ref(false);
@@ -95,7 +70,7 @@ const filteredPosts = computed(() => {
     result = result.filter(
       (post) =>
         post.title.toLowerCase().includes(query) ||
-        post.summary.toLowerCase().includes(query) ||
+        post.excerpt.toLowerCase().includes(query) ||
         post.tags.some((tag) => tag.toLowerCase().includes(query))
     );
   }
@@ -206,12 +181,12 @@ const nextPage = () => {
                 </span>
               </div>
               <h2 class="post-title">{{ post.title }}</h2>
-              <p class="post-excerpt">{{ post.summary }}</p>
+              <p class="post-excerpt">{{ post.excerpt }}</p>
               <div class="post-meta">
                 <div class="meta-left">
                   <span class="post-date">{{ post.date }}</span>
                 </div>
-                <router-link :to="'/blog/' + post.id" class="post-link">
+                <router-link :to="`/blog/${post.id}`" class="post-link">
                   {{ t("blog.readMore") }}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

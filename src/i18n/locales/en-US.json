@@ -42,6 +42,8 @@
       "loadingArticle": "Loading article...",
       "loadError": "Failed to load article, please try again later",
       "readTime": "{minutes} min read",
+      "readTimeSuffix": "min read",
+      "postNotFound": "The requested post was not found",
       "noComments": "No comments yet. Be the first to comment!",
       "commentCount": "Comments ({count})",
       "postComment": "Post Comment",
@@ -100,13 +102,17 @@
     },
     "footer": {
       "navigation": "Navigation",
+      "quickLinks": "Quick Links",
       "contact": "Contact",
-      "copyright": "Copyright",
-      "allRightsReserved": "All Rights Reserved",
-      "explore": "Explore More",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "rss": "RSS Feed",
       "rights": "All Rights Reserved"
     },
     "post": {
       "relatedPosts": "Related Posts"
+    },
+    "error": {
+      "title": "An Error Occurred"
     }
   } 

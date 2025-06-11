@@ -3,11 +3,11 @@
     "home": "首页",
     "blog": "博客",
     "about": "关于",
-    "contact": "联系我们"
+    "contact": "联系"
   },
   "brand": {
     "name": "我的博客",
-    "slogan": "分享技术与生活"
+    "slogan": "分享技术与生活的点点滴滴"
   },
   "theme": {
     "light": "亮色模式",
@@ -42,6 +42,8 @@
     "loadingArticle": "加载文章中...",
     "loadError": "加载文章失败，请稍后再试",
     "readTime": "{minutes} 分钟阅读",
+    "readTimeSuffix": "分钟阅读",
+    "postNotFound": "未找到指定的文章",
     "noComments": "暂无评论，来发表第一条评论吧！",
     "commentCount": "评论 ({count})",
     "postComment": "发表评论",
@@ -68,7 +70,7 @@
     },
     "hero": {
       "title": "探索技术的无限可能",
-      "description": "分享开发的点点滴滴",
+      "description": "全栈开发者 / 技术博主 / 开源爱好者",
       "browseArticles": "浏览文章"
     }
   },
@@ -100,13 +102,17 @@
   },
   "footer": {
     "navigation": "导航",
+    "quickLinks": "快速链接",
     "contact": "联系方式",
-    "copyright": "版权所有",
-    "allRightsReserved": "保留所有权利",
-    "explore": "探索更多",
+    "privacy": "隐私政策",
+    "terms": "服务条款",
+    "rss": "RSS订阅",
     "rights": "保留所有权利"
   },
   "post": {
     "relatedPosts": "相关文章"
+  },
+  "error": {
+    "title": "发生错误"
   }
 } 
