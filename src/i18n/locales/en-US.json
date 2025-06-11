@@ -1,0 +1,112 @@
+{
+    "nav": {
+      "home": "Home",
+      "blog": "Blog",
+      "about": "About",
+      "contact": "Contact"
+    },
+    "brand": {
+      "name": "My Blog",
+      "slogan": "Sharing Tech & Life"
+    },
+    "theme": {
+      "light": "Light Mode",
+      "dark": "Dark Mode", 
+      "system": "System Mode",
+      "toggle": "Toggle Theme"
+    },
+    "search": {
+      "button": "Search",
+      "label": "Search",
+      "placeholder": "Enter keywords to search articles...",
+      "empty": "No matching content found",
+      "tip": "Start typing to search blog content",
+      "shortcut": {
+        "navigate": "Navigate results",
+        "select": "Open selected result",
+        "close": "Close search"
+      },
+      "clear": "Clear search",
+      "close": "Close search"
+    },
+    "blog": {
+      "title": "Blog Posts",
+      "description": "Sharing technical insights and development experiences",
+      "readMore": "Read More",
+      "backToList": "Back to Articles",
+      "publishedOn": "Published on",
+      "relatedPosts": "Related Articles",
+      "sharePost": "Share Article",
+      "comments": "Comments",
+      "loading": "Loading...",
+      "loadingArticle": "Loading article...",
+      "loadError": "Failed to load article, please try again later",
+      "readTime": "{minutes} min read",
+      "noComments": "No comments yet. Be the first to comment!",
+      "commentCount": "Comments ({count})",
+      "postComment": "Post Comment",
+      "commentContent": "Comment",
+      "commentPlaceholder": "Share your thoughts...",
+      "submitComment": "Submit Comment",
+      "commentSuccess": "Comment submitted successfully!",
+      "commentError": "Failed to submit comment",
+      "noResults": "No articles found",
+      "shareVia": {
+        "twitter": "Share on Twitter",
+        "facebook": "Share on Facebook",
+        "linkedin": "Share on LinkedIn",
+        "weibo": "Share on Weibo",
+        "wechat": "Share on WeChat",
+        "wechatTip": "Please take a screenshot to share on WeChat"
+      }
+    },
+    "home": {
+      "latestPosts": {
+        "title": "Latest Posts",
+        "viewAll": "View All Posts",
+        "readMore": "Read More"
+      },
+      "hero": {
+        "title": "Explore the Possibilities of Technology",
+        "description": "Sharing development journey and insights",
+        "browseArticles": "Browse Articles"
+      }
+    },
+    "filter": {
+      "tags": {
+        "title": "Filter by Tags",
+        "clearAll": "Clear All"
+      }
+    },
+    "pagination": {
+      "prev": "Previous",
+      "next": "Next",
+      "info": "Page {current} of {total}"
+    },
+    "notFound": {
+      "title": "Page Not Found",
+      "description": "Sorry, the page you are looking for does not exist or has been moved.",
+      "backHome": "Back to Home"
+    },
+    "language": {
+      "zh": "Chinese",
+      "en": "English"
+    },
+    "buttons": {
+      "submit": "Submit",
+      "cancel": "Cancel",
+      "save": "Save",
+      "delete": "Delete"
+    },
+    "footer": {
+      "navigation": "Navigation",
+      "contact": "Contact",
+      "copyright": "Copyright",
+      "allRightsReserved": "All Rights Reserved",
+      "explore": "Explore More",
+      "rights": "All Rights Reserved"
+    },
+    "post": {
+      "relatedPosts": "Related Posts"
+    }
+  } 

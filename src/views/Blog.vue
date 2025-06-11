@@ -25,35 +25,29 @@ watch(locale, () => {
 const blogPosts = ref([
   {
     id: 1,
-    title: "开始使用 Vue 3 和组合式 API",
-    summary: "探索 Vue 3 的新特性和组合式 API 如何改变我们的开发方式。",
-    cover: "https://picsum.photos/id/180/800/450",
-    date: "2023-06-15",
-    tags: ["Vue", "JavaScript", "前端开发"],
+    title: "Vue 3 组合式 API 实践指南",
+    summary:
+      "探索 Vue 3 组合式 API 的最佳实践和使用技巧，提升代码的可维护性和复用性。",
+    cover: "https://picsum.photos/id/1/800/400",
+    date: "2024-03-15",
+    tags: ["Vue.js", "JavaScript", "前端开发"],
   },
   {
     id: 2,
-    title: "响应式设计最佳实践",
-    summary: "学习创建在所有设备上看起来都很棒的响应式网站的技巧和策略。",
-    cover: "https://picsum.photos/id/1/800/450",
-    date: "2023-05-22",
-    tags: ["CSS", "响应式设计", "前端开发"],
+    title: "构建高性能的 Web 应用",
+    summary:
+      "学习如何优化 Web 应用的性能，包括代码分割、懒加载、缓存策略等技术。",
+    cover: "https://picsum.photos/id/2/800/400",
+    date: "2024-03-10",
+    tags: ["性能优化", "Web开发", "前端开发"],
   },
   {
     id: 3,
-    title: "使用 Node.js 和 Express 构建 RESTful API",
-    summary: "从头开始构建一个功能完整的 RESTful API 的分步指南。",
-    cover: "https://picsum.photos/id/0/800/450",
-    date: "2023-04-10",
-    tags: ["Node.js", "Express", "后端开发", "API"],
-  },
-  {
-    id: 4,
-    title: "CSS Grid 与 Flexbox：何时使用？",
-    summary: "深入比较这两种布局方法，并了解何时使用每种方法。",
-    cover: "https://picsum.photos/id/1024/800/450",
-    date: "2023-03-05",
-    tags: ["CSS", "布局", "前端开发"],
+    title: "现代 CSS 技术解析",
+    summary: "深入了解 CSS Grid、Flexbox、CSS 变量等现代 CSS 技术的应用。",
+    cover: "https://picsum.photos/id/3/800/400",
+    date: "2024-03-05",
+    tags: ["CSS", "Web开发", "前端开发"],
   },
 ]);
 
@@ -69,9 +63,6 @@ onMounted(() => {
   setTimeout(() => {
     isLoading.value = false;
   }, 500);
-
-  // 实际应用中这里会是一个 API 调用
-  // fetchBlogPosts();
 });
 
 onUnmounted(() => {
@@ -87,11 +78,11 @@ const postsPerPage = 6;
 
 // 获取所有标签
 const allTags = computed(() => {
-  const tags = [];
+  const tags = new Set();
   blogPosts.value.forEach((post) => {
-    post.tags.forEach((tag) => tags.push(tag));
+    post.tags.forEach((tag) => tags.add(tag));
   });
-  return tags;
+  return Array.from(tags);
 });
 
 // 根据搜索和标签筛选文章
@@ -156,7 +147,7 @@ const nextPage = () => {
     <header class="page-header">
       <div class="container">
         <h1 class="page-title">{{ t("blog.title") }}</h1>
-        <p class="page-description">分享我的技术见解和开发经验</p>
+        <p class="page-description">{{ t("blog.description") }}</p>
       </div>
       <div class="header-background">
         <div class="header-shape-1"></div>
@@ -169,7 +160,10 @@ const nextPage = () => {
       <div class="container">
         <div class="filters">
           <!-- 搜索框组件 -->
-          <SearchBar :placeholder="t('blog.search')" @search="handleSearch" />
+          <SearchBar
+            :placeholder="t('search.placeholder')"
+            @search="handleSearch"
+          />
 
           <!-- 标签筛选组件 -->
           <TagFilter :tags="allTags" v-model:selectedTags="selectedTags" />
@@ -183,7 +177,7 @@ const nextPage = () => {
         <!-- 加载状态 -->
         <div v-if="isLoading" class="loading-container">
           <div class="loading-spinner"></div>
-          <p>加载中...</p>
+          <p>{{ t("blog.loading") }}</p>
         </div>
 
         <!-- 无结果提示 -->
@@ -218,7 +212,7 @@ const nextPage = () => {
                   <span class="post-date">{{ post.date }}</span>
                 </div>
                 <router-link :to="'/blog/' + post.id" class="post-link">
-                  {{ t("home.latestPosts.readMore") }}
+                  {{ t("blog.readMore") }}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
@@ -259,17 +253,19 @@ const nextPage = () => {
             >
               <polyline points="15 18 9 12 15 6"></polyline>
             </svg>
-            上一页
+            {{ t("pagination.prev") }}
           </button>
           <span class="page-info">
-            第 {{ currentPage }} 页，共 {{ totalPages }} 页
+            {{
+              t("pagination.info", { current: currentPage, total: totalPages })
+            }}
           </span>
           <button
             class="pagination-button"
             :disabled="currentPage === totalPages"
             @click="nextPage"
           >
-            下一页
+            {{ t("pagination.next") }}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"

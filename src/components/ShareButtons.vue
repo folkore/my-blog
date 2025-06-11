@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   title: {
@@ -15,6 +16,8 @@ const props = defineProps({
     default: "",
   },
 });
+
+const { t } = useI18n();
 
 // 获取当前页面URL（如果未提供）
 const pageUrl = computed(() => props.url || window.location.href);
@@ -61,11 +64,15 @@ const openShareWindow = (url) => {
     "width=600,height=400,location=0,menubar=0,toolbar=0,status=0,scrollbars=1,resizable=1"
   );
 };
+
+const shareToWechat = () => {
+  alert(t("blog.shareVia.wechatTip"));
+};
 </script>
 
 <template>
   <div class="share-buttons">
-    <h4>分享文章</h4>
+    <h4>{{ t("blog.sharePost") }}</h4>
     <div class="share-icons">
       <!-- Twitter -->
       <button
@@ -169,8 +176,8 @@ const openShareWindow = (url) => {
       <!-- 微信 -->
       <button
         class="share-button wechat"
-        @click="openShareWindow(shareLinks.wechat)"
-        title="分享到微信"
+        @click="shareToWechat"
+        :title="t('blog.shareVia.wechat')"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

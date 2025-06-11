@@ -1,37 +1,38 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 
 const router = useRouter();
+const { t } = useI18n();
 
 // 博客文章列表（示例数据）
 const latestPosts = ref([
   {
     id: 1,
-    title: "如何使用Vue3和Vite构建现代化Web应用",
+    title: "Vue 3 组合式 API 实践指南",
     excerpt:
-      "Vue3和Vite提供了令人难以置信的开发体验，本文将介绍如何利用这些工具构建现代化Web应用...",
-    date: "2023-06-10",
-    image: "https://picsum.photos/id/1/800/450",
-    tags: ["Vue3", "Vite", "前端开发"],
+      "探索 Vue 3 组合式 API 的最佳实践和使用技巧，提升代码的可维护性和复用性。",
+    image: "https://picsum.photos/id/1/800/400",
+    date: "2024-03-15",
+    tags: ["Vue.js", "JavaScript", "前端开发"],
   },
   {
     id: 2,
-    title: "在Vue3中实现深色模式切换",
+    title: "构建高性能的 Web 应用",
     excerpt:
-      "本文将深入探讨如何在Vue3应用中实现漂亮的深色模式切换效果，包括保存用户偏好设置...",
-    date: "2023-05-28",
-    image: "https://picsum.photos/id/2/800/450",
-    tags: ["Vue3", "深色模式", "CSS变量"],
+      "学习如何优化 Web 应用的性能，包括代码分割、懒加载、缓存策略等技术。",
+    image: "https://picsum.photos/id/2/800/400",
+    date: "2024-03-10",
+    tags: ["性能优化", "Web开发", "前端开发"],
   },
   {
     id: 3,
-    title: "CSS变量的高级用法",
-    excerpt:
-      "CSS变量（自定义属性）为前端开发带来了更多的灵活性，本文将介绍一些高级用法和技巧...",
-    date: "2023-05-15",
-    image: "https://picsum.photos/id/3/800/450",
-    tags: ["CSS", "前端设计", "Web开发"],
+    title: "现代 CSS 技术解析",
+    excerpt: "深入了解 CSS Grid、Flexbox、CSS 变量等现代 CSS 技术的应用。",
+    image: "https://picsum.photos/id/3/800/400",
+    date: "2024-03-05",
+    tags: ["CSS", "Web开发", "前端开发"],
   },
 ]);
 
@@ -43,50 +44,23 @@ const navigateToPost = (id) => {
 
 <template>
   <div class="home">
-    <!-- Hero 区域 -->
+    <!-- Hero Section -->
     <section class="hero">
       <div class="container">
         <div class="hero-content">
-          <h1 class="hero-title">
-            <span class="gradient-text">我相信优雅的设计</span>
-            <br />和高效的代码
-          </h1>
-          <p class="hero-description">探索技术的无限可能，分享开发的点点滴滴</p>
-          <div class="hero-actions">
-            <router-link to="/blog" class="btn btn-primary">
-              浏览文章
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-              </svg>
-            </router-link>
-            <router-link to="/about" class="btn btn-secondary">
-              了解更多
-            </router-link>
-          </div>
+          <h1 class="hero-title">{{ t("home.hero.title") }}</h1>
+          <p class="hero-description">{{ t("home.hero.description") }}</p>
+          <router-link to="/blog" class="hero-button">
+            {{ t("home.hero.browseArticles") }}
+          </router-link>
         </div>
-      </div>
-      <div class="hero-background">
-        <div class="hero-shape-1"></div>
-        <div class="hero-shape-2"></div>
-        <div class="hero-shape-3"></div>
       </div>
     </section>
 
-    <!-- 最新文章区域 -->
+    <!-- Latest Posts Section -->
     <section class="latest-posts">
       <div class="container">
-        <h2 class="section-title">最新文章</h2>
+        <h2 class="section-title">{{ t("home.latestPosts.title") }}</h2>
         <div class="posts-grid">
           <article v-for="post in latestPosts" :key="post.id" class="post-card">
             <div class="post-image">
@@ -107,43 +81,15 @@ const navigateToPost = (id) => {
               <div class="post-meta">
                 <span class="post-date">{{ post.date }}</span>
                 <router-link :to="'/blog/' + post.id" class="post-link">
-                  阅读更多
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                  </svg>
+                  {{ t("home.latestPosts.readMore") }}
                 </router-link>
               </div>
             </div>
           </article>
         </div>
-        <div class="section-actions">
-          <router-link to="/blog" class="btn btn-outline">
-            查看所有文章
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
+        <div class="view-all">
+          <router-link to="/blog" class="view-all-link">
+            {{ t("home.latestPosts.viewAll") }}
           </router-link>
         </div>
       </div>
@@ -226,7 +172,7 @@ const navigateToPost = (id) => {
   min-height: 100vh;
 }
 
-/* Hero 区域 */
+/* Hero Section */
 .hero {
   position: relative;
   padding: 6rem 0;
@@ -249,23 +195,60 @@ const navigateToPost = (id) => {
   margin-bottom: 1.5rem;
 }
 
-.gradient-text {
-  background: var(--color-accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  position: relative;
-}
-
 .hero-description {
   font-size: 1.25rem;
   color: var(--color-secondary-text);
   margin-bottom: 2rem;
 }
 
-.hero-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
+.hero-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--transition-normal) var(--bezier-bounce);
+  position: relative;
+  overflow: hidden;
+  background: var(--color-primary-gradient);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.hero-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.hero-button svg {
+  transition: transform var(--transition-normal) var(--bezier-bounce);
+}
+
+.hero-button:hover svg {
+  transform: translateX(4px);
+}
+
+.hero-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s var(--bezier-smooth);
+}
+
+.hero-button:hover::before {
+  transform: translateX(100%);
 }
 
 .hero-background {
@@ -313,82 +296,7 @@ const navigateToPost = (id) => {
   transform: translate(-50%, -50%);
 }
 
-/* 按钮样式 */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-full);
-  font-weight: 500;
-  text-decoration: none;
-  transition: all var(--transition-normal) var(--bezier-bounce);
-  position: relative;
-  overflow: hidden;
-}
-
-.btn svg {
-  transition: transform var(--transition-normal) var(--bezier-bounce);
-}
-
-.btn:hover svg {
-  transform: translateX(4px);
-}
-
-.btn::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    45deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
-  transform: translateX(-100%);
-  transition: transform 0.6s var(--bezier-smooth);
-}
-
-.btn:hover::before {
-  transform: translateX(100%);
-}
-
-.btn-primary {
-  background: var(--color-primary-gradient);
-  color: white;
-  box-shadow: var(--shadow-md);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.btn-secondary {
-  background: var(--color-tertiary-background);
-  color: var(--color-text);
-}
-
-.btn-secondary:hover {
-  background: var(--color-secondary-background);
-  transform: translateY(-2px);
-}
-
-.btn-outline {
-  border: 1px solid var(--color-border);
-  color: var(--color-text);
-}
-
-.btn-outline:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  transform: translateY(-2px);
-}
-
-/* 最新文章区域 */
+/* Latest Posts Section */
 .latest-posts {
   padding: 6rem 0;
 }
@@ -514,11 +422,61 @@ const navigateToPost = (id) => {
   transform: translateX(4px);
 }
 
-.section-actions {
+.view-all {
   text-align: center;
 }
 
-/* 技术栈区域 */
+.view-all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--transition-normal) var(--bezier-bounce);
+  position: relative;
+  overflow: hidden;
+  background: var(--color-primary-gradient);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.view-all-link:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.view-all-link svg {
+  transition: transform var(--transition-normal) var(--bezier-bounce);
+}
+
+.view-all-link:hover svg {
+  transform: translateX(4px);
+}
+
+.view-all-link::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s var(--bezier-smooth);
+}
+
+.view-all-link:hover::before {
+  transform: translateX(100%);
+}
+
+/* Tech Stack Section */
 .tech-stack {
   padding: 6rem 0;
   background: var(--color-secondary-background);
@@ -574,7 +532,7 @@ const navigateToPost = (id) => {
   color: var(--color-secondary-text);
 }
 
-/* 响应式设计 */
+/* Responsive Design */
 @media (max-width: 768px) {
   .hero {
     padding: 4rem 0;
@@ -586,15 +544,6 @@ const navigateToPost = (id) => {
 
   .hero-description {
     font-size: 1.125rem;
-  }
-
-  .hero-actions {
-    flex-direction: column;
-  }
-
-  .btn {
-    width: 100%;
-    justify-content: center;
   }
 
   .posts-grid {

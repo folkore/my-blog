@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   comments: {
@@ -23,6 +24,8 @@ const newComment = ref({
 const isSubmitting = ref(false);
 const errors = ref({});
 const submitSuccess = ref(false);
+
+const t = useI18n();
 
 // 验证评论表单
 const validateForm = () => {
@@ -100,11 +103,11 @@ const commentCount = computed(() => props.comments.length);
 
 <template>
   <section class="comments-section">
-    <h2>评论 ({{ commentCount }})</h2>
+    <h2>{{ t("blog.commentCount", { count: commentCount }) }}</h2>
 
     <!-- 评论列表 -->
     <div v-if="comments.length === 0" class="no-comments">
-      <p>暂无评论，来发表第一条评论吧！</p>
+      <p>{{ t("blog.noComments") }}</p>
     </div>
 
     <div v-else class="comments-list">
@@ -124,10 +127,10 @@ const commentCount = computed(() => props.comments.length);
 
     <!-- 评论表单 -->
     <div class="comment-form-container">
-      <h3>发表评论</h3>
+      <h3>{{ t("blog.postComment") }}</h3>
       <form class="comment-form" @submit.prevent="submitComment">
         <div class="form-group">
-          <label for="comment">评论内容</label>
+          <label for="comment">{{ t("blog.commentContent") }}</label>
           <textarea
             id="comment"
             v-model="newComment.content"
@@ -171,10 +174,12 @@ const commentCount = computed(() => props.comments.length);
           </div>
         </div>
         <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
-          <span v-if="isSubmitting">提交中...</span>
-          <span v-else>提交评论</span>
+          <span v-if="isSubmitting">{{ t("buttons.submit") }}...</span>
+          <span v-else>{{ t("blog.submitComment") }}</span>
         </button>
-        <div v-if="submitSuccess" class="success-message">评论提交成功！</div>
+        <div v-if="submitSuccess" class="success-message">
+          {{ t("blog.commentSuccess") }}
+        </div>
       </form>
     </div>
   </section>

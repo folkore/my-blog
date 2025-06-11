@@ -250,13 +250,12 @@ const handleCommentAdded = (newComment) => {
     <!-- 加载状态 -->
     <div v-if="isLoading" class="loading-container">
       <div class="loading-spinner"></div>
-      <p>加载文章中...</p>
+      <p>{{ t("blog.loadingArticle") }}</p>
     </div>
 
     <!-- 错误状态 -->
-    <div v-else-if="error" class="error-container">
-      <p>{{ error }}</p>
-      <button class="button" @click="backToList">返回文章列表</button>
+    <div v-if="error" class="error-container">
+      <p>{{ t("blog.loadError") }}</p>
     </div>
 
     <!-- 文章内容 -->
@@ -272,27 +271,32 @@ const handleCommentAdded = (newComment) => {
         <div class="post-meta">
           <div class="author-info">
             <img
+              v-if="blogPost.author"
               :src="blogPost.author.avatar"
               :alt="blogPost.author.name"
               class="author-avatar"
             />
-            <span class="author-name">{{ blogPost.author.name }}</span>
+            <div class="author-details">
+              <span class="author-name">{{ blogPost.author.name }}</span>
+              <span class="post-date"
+                >{{ t("blog.publishedOn") }} {{ formattedDate }}</span
+              >
+              <span class="read-time">{{
+                t("blog.readTime", {
+                  minutes: calculateReadTime(blogPost.content),
+                })
+              }}</span>
+            </div>
           </div>
-          <div class="post-details">
-            <span class="post-date">{{ formattedDate }}</span>
-            <span class="post-read-time">{{
-              calculateReadTime(blogPost.content)
-            }}</span>
+          <div class="post-tags">
+            <span
+              v-for="(tag, index) in blogPost.tags"
+              :key="index"
+              class="post-tag"
+            >
+              {{ tag }}
+            </span>
           </div>
-        </div>
-        <div class="post-tags">
-          <span
-            v-for="(tag, index) in blogPost.tags"
-            :key="index"
-            class="post-tag"
-          >
-            {{ tag }}
-          </span>
         </div>
       </header>
 

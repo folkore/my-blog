@@ -1,0 +1,24 @@
+{
+  "nav": {
+    "home": "Home",
+    "blog": "Blog",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "search": {
+    "label": "Search",
+    "placeholder": "Search articles...",
+    "empty": "No results found",
+    "tip": "Type to start searching",
+    "shortcut": {
+      "navigate": "Navigate",
+      "select": "Select",
+      "close": "Close"
+    }
+  },
+  "blog": {
+    "title": "Blog Posts",
+    "search": "Search articles...",
+    "noResults": "No articles found"
+  }
+}

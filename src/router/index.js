@@ -47,15 +47,6 @@ const routes = [
     }
   },
   {
-    path: '/language-test',
-    name: 'LanguageTest',
-    component: () => import('../views/LanguageTest.vue'),
-    meta: { 
-      title: '语言测试',
-      transition: 'fade'
-    }
-  },
-  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('../views/NotFound.vue'),

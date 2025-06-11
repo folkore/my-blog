@@ -1,7 +1,9 @@
 <script setup>
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 
 const router = useRouter();
+const i18n = useI18n();
 
 const goBack = () => {
   router.go(-1);
@@ -16,8 +18,8 @@ const goHome = () => {
   <div class="not-found container">
     <div class="not-found-content">
       <h1>404</h1>
-      <h2>页面未找到</h2>
-      <p>抱歉，您访问的页面不存在或已被移动到其他位置。</p>
+      <h2>{{ t("notFound.title") }}</h2>
+      <p>{{ t("notFound.description") }}</p>
 
       <div class="actions">
         <button @click="goBack" class="button secondary-button">

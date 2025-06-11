@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   placeholder: {
@@ -10,6 +11,7 @@ const props = defineProps({
 
 const emit = defineEmits(["search"]);
 const searchQuery = ref("");
+const { t } = useI18n();
 
 const handleSearch = () => {
   emit("search", searchQuery.value);
@@ -19,6 +21,10 @@ const clearSearch = () => {
   searchQuery.value = "";
   emit("search", "");
 };
+
+const handleInput = () => {
+  emit("search", searchQuery.value);
+};
 </script>
 
 <template>
@@ -27,14 +33,15 @@ const clearSearch = () => {
       <input
         v-model="searchQuery"
         type="text"
-        :placeholder="placeholder"
-        @keyup.enter="handleSearch"
+        :placeholder="t('search.placeholder')"
+        @input="handleInput"
+        class="search-input"
       />
       <button
         v-if="searchQuery"
         class="clear-button"
         @click="clearSearch"
-        aria-label="清除搜索"
+        :aria-label="t('search.clear')"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -51,7 +58,11 @@ const clearSearch = () => {
           <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
       </button>
-      <button class="search-button" @click="handleSearch" aria-label="搜索">
+      <button
+        class="search-button"
+        @click="handleSearch"
+        :aria-label="t('search.label')"
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"

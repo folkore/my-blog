@@ -1,10 +1,11 @@
 <script setup>
 import { ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   tags: {
     type: Array,
-    required: true,
+    default: () => [],
   },
   selectedTags: {
     type: Array,
@@ -13,7 +14,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["update:selectedTags"]);
-const localSelectedTags = ref([...props.selectedTags]);
+const { t } = useI18n();
 
 // 计算每个标签的出现次数
 const tagCounts = computed(() => {
@@ -26,52 +27,49 @@ const tagCounts = computed(() => {
 
 // 获取所有唯一标签
 const uniqueTags = computed(() => {
-  return [...new Set(props.tags)].sort();
+  return [...new Set(props.tags)];
 });
 
 // 切换标签选择状态
 const toggleTag = (tag) => {
-  const index = localSelectedTags.value.indexOf(tag);
+  const newSelectedTags = [...props.selectedTags];
+  const index = newSelectedTags.indexOf(tag);
   if (index === -1) {
-    localSelectedTags.value.push(tag);
+    newSelectedTags.push(tag);
   } else {
-    localSelectedTags.value.splice(index, 1);
+    newSelectedTags.splice(index, 1);
   }
-  emit("update:selectedTags", localSelectedTags.value);
+  emit("update:selectedTags", newSelectedTags);
 };
 
 // 清除所有选中标签
 const clearTags = () => {
-  localSelectedTags.value = [];
   emit("update:selectedTags", []);
 };
 </script>
 
 <template>
   <div class="tag-filter">
-    <div class="tag-filter-header">
-      <h3>标签筛选</h3>
-      <button
-        v-if="localSelectedTags.length > 0"
-        @click="clearTags"
-        class="clear-tags"
-      >
-        清除
-      </button>
-    </div>
-
-    <div class="tags-container">
+    <h3>{{ t("filter.tags.title") }}</h3>
+    <div class="tag-list">
       <button
         v-for="tag in uniqueTags"
         :key="tag"
         class="tag-button"
-        :class="{ active: localSelectedTags.includes(tag) }"
+        :class="{ active: selectedTags.includes(tag) }"
         @click="toggleTag(tag)"
       >
         {{ tag }}
-        <span class="tag-count">{{ tagCounts[tag] }}</span>
+        <span class="tag-count">({{ tagCounts[tag] }})</span>
       </button>
     </div>
+    <button
+      v-if="selectedTags.length > 0"
+      class="clear-button"
+      @click="clearTags"
+    >
+      {{ t("filter.tags.clearAll") }}
+    </button>
   </div>
 </template>
 

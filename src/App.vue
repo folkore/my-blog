@@ -5,15 +5,19 @@ import BackToTop from "./components/BackToTop.vue";
 import ReadingProgress from "./components/ReadingProgress.vue";
 import PageTransition from "./components/PageTransition.vue";
 import LanguageSwitcher from "./components/LanguageSwitcher.vue";
+import GlobalSearch from "./components/GlobalSearch.vue";
 import { useI18n } from "vue-i18n";
+import { usePostsStore } from "./store/index.js";
 
 const isScrolled = ref(false);
 const isMenuOpen = ref(false);
 
 const { themeMode, currentTheme, toggleTheme, cleanup, THEME } = useTheme();
 const { t, locale } = useI18n();
+const postsStore = usePostsStore();
 
-// 监听语言变化，更新导航项
+const navItems = ref([]);
+
 const updateNavItems = () => {
   navItems.value = [
     { name: t("nav.home"), path: "/" },
@@ -23,20 +27,8 @@ const updateNavItems = () => {
   ];
 };
 
-// 将导航项改为响应式
-const navItems = ref([
-  { name: t("nav.home"), path: "/" },
-  { name: t("nav.blog"), path: "/blog" },
-  { name: t("nav.about"), path: "/about" },
-  { name: t("nav.contact"), path: "/contact" },
-]);
+watch(locale, updateNavItems, { immediate: true });
 
-// 监听语言变化
-watch(locale, () => {
-  updateNavItems();
-});
-
-// 监听语言变化事件
 const handleLanguageChanged = () => {
   updateNavItems();
 };
@@ -58,31 +50,31 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
   window.removeEventListener("language-changed", handleLanguageChanged);
-  cleanup(); // 清理主题相关的事件监听
+  cleanup();
 });
 </script>
 
 <template>
   <div class="app" :class="{ 'dark-theme': themeMode === THEME.DARK }">
-    <!-- 阅读进度条 -->
     <ReadingProgress />
 
-    <!-- 导航栏 -->
     <header class="header" :class="{ 'header-scrolled': isScrolled }">
       <nav class="nav container">
-        <router-link to="/" class="nav-brand">
-          <div class="brand-logo">M</div>
-          <span class="brand-text">MyBlog</span>
-        </router-link>
+        <div class="nav-brand">
+          <router-link to="/" class="nav-brand">
+            <div class="logo">M</div>
+            <span class="brand-name">{{ t("brand.name") }}</span>
+          </router-link>
+        </div>
 
         <div class="nav-menu" :class="{ 'nav-menu-active': isMenuOpen }">
           <div class="nav-links">
             <router-link
-              v-for="(item, index) in navItems"
-              :key="`${item.path}-${locale}`"
+              v-for="item in navItems"
+              :key="item.path"
               :to="item.path"
               class="nav-link"
-              active-class="nav-link-active"
+              :class="{ 'nav-link-active': $route.path === item.path }"
               @click="isMenuOpen = false"
             >
               {{ item.name }}
@@ -91,23 +83,40 @@ onUnmounted(() => {
         </div>
 
         <div class="nav-right">
-          <LanguageSwitcher class="nav-language" />
           <button
-            class="theme-toggle"
+            class="search-btn"
+            @click="$refs.globalSearch.openSearch()"
+            :aria-label="t('search.button')"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>{{ t("search.button") }}</span>
+            <span class="kbd-shortcut">
+              <kbd>Ctrl</kbd><span>+</span><kbd>K</kbd>
+            </span>
+          </button>
+          <LanguageSwitcher class="desktop-lang" />
+          <button
+            class="theme-toggle desktop-theme"
             @click="toggleTheme"
-            :title="
-              themeMode === THEME.LIGHT
-                ? '切换到暗色模式'
-                : themeMode === THEME.DARK
-                ? '切换到跟随系统'
-                : '切换到亮色模式'
-            "
+            :title="t('theme.toggle')"
           >
             <span
               class="theme-icon"
               :class="{ 'theme-icon-dark': currentTheme === THEME.DARK }"
             >
-              <!-- 暗色模式图标 -->
               <svg
                 v-if="currentTheme === THEME.DARK"
                 xmlns="http://www.w3.org/2000/svg"
@@ -124,9 +133,8 @@ onUnmounted(() => {
                   d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
                 ></path>
               </svg>
-              <!-- 亮色模式图标 -->
               <svg
-                v-else-if="themeMode === THEME.LIGHT"
+                v-else
                 xmlns="http://www.w3.org/2000/svg"
                 width="20"
                 height="20"
@@ -147,23 +155,6 @@ onUnmounted(() => {
                 <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
               </svg>
-              <!-- 系统主题图标 -->
-              <svg
-                v-else
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                <line x1="8" y1="21" x2="16" y2="21"></line>
-                <line x1="12" y1="17" x2="12" y2="21"></line>
-              </svg>
             </span>
           </button>
           <button
@@ -179,7 +170,6 @@ onUnmounted(() => {
       </nav>
     </header>
 
-    <!-- 主要内容区域 -->
     <main class="main">
       <router-view v-slot="{ Component, route }">
         <PageTransition :name="route.meta.transition || 'page'">
@@ -188,19 +178,18 @@ onUnmounted(() => {
       </router-view>
     </main>
 
-    <!-- 页脚 -->
     <footer class="footer">
       <div class="container">
         <div class="footer-content">
           <div class="footer-brand">
             <div class="footer-logo">
               <div class="brand-logo">M</div>
-              <h3>MyBlog</h3>
+              <h3>{{ t("brand.name") }}</h3>
             </div>
-            <p>探索技术的无限可能</p>
+            <p>{{ t("brand.slogan") }}</p>
             <div class="social-links">
-              <a href="https://github.com" target="_blank" class="social-link">
-                <svg
+              <a href="https://github.com" target="_blank" class="social-link"
+                ><svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
                   height="20"
@@ -213,11 +202,10 @@ onUnmounted(() => {
                 >
                   <path
                     d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
-                  ></path>
-                </svg>
-              </a>
-              <a href="https://twitter.com" target="_blank" class="social-link">
-                <svg
+                  ></path></svg
+              ></a>
+              <a href="https://twitter.com" target="_blank" class="social-link"
+                ><svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
                   height="20"
@@ -230,25 +218,23 @@ onUnmounted(() => {
                 >
                   <path
                     d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"
-                  ></path>
-                </svg>
-              </a>
+                  ></path></svg
+              ></a>
             </div>
           </div>
           <div class="footer-links">
             <div class="footer-section">
-              <h4>导航</h4>
+              <h4>{{ t("footer.navigation") }}</h4>
               <router-link
-                v-for="(item, index) in navItems"
-                :key="index"
+                v-for="item in navItems"
+                :key="item.path"
                 :to="item.path"
                 class="footer-link"
+                >{{ item.name }}</router-link
               >
-                {{ item.name }}
-              </router-link>
             </div>
             <div class="footer-section">
-              <h4>联系我</h4>
+              <h4>{{ t("footer.contact") }}</h4>
               <a href="mailto:contact@myblog.com" class="footer-link">Email</a>
               <a href="#" class="footer-link">RSS</a>
             </div>
@@ -256,14 +242,19 @@ onUnmounted(() => {
         </div>
         <div class="footer-bottom">
           <p>
-            &copy; {{ new Date().getFullYear() }} MyBlog. All rights reserved.
+            &copy; {{ new Date().getFullYear() }} {{ t("brand.name") }}.
+            {{ t("footer.rights") }}
           </p>
         </div>
       </div>
     </footer>
 
-    <!-- 返回顶部按钮 -->
     <BackToTop />
+    <GlobalSearch
+      ref="globalSearch"
+      :posts="postsStore.posts"
+      :hideButton="true"
+    />
   </div>
 </template>
 
@@ -407,90 +398,50 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 2rem;
 }
 
 .nav-brand {
-  text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 16px;
-  position: relative;
+  text-decoration: none;
+  gap: 0.75rem;
 }
 
-.brand-logo {
-  width: 40px;
-  height: 40px;
-  background: var(--color-primary-gradient);
+.logo {
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-lg);
+  background: var(--color-primary-gradient);
+  background-size: 150% 150%;
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 600;
+  transition: all var(--transition-slow) var(--bezier-smooth);
+  animation: gradient-calm 8s ease infinite;
+}
+
+.nav-brand:hover .logo {
+  transform: translateY(-4px) scale(1.1);
+  box-shadow: var(--shadow-xl);
+  animation-duration: 3s;
+}
+
+.brand-name {
   font-size: 1.25rem;
-  box-shadow: var(--shadow-lg);
-  position: relative;
-  overflow: hidden;
-  transition: all var(--transition-normal) var(--bezier-bounce);
-}
-
-.brand-logo::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    45deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
-  transform: translateX(-100%);
-  transition: transform 0.6s var(--bezier-smooth);
-}
-
-.nav-brand:hover .brand-logo {
-  transform: scale(1.1) rotate(-4deg);
-  box-shadow: var(--shadow-glow);
-}
-
-.nav-brand:hover .brand-logo::before {
-  transform: translateX(100%);
-}
-
-.brand-text {
-  font-size: 1.5rem;
-  font-weight: 700;
-  background: var(--color-accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  transition: opacity var(--transition-normal) ease;
-  position: relative;
-}
-
-.brand-text::after {
-  content: attr(data-text);
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: -1;
-  background: var(--color-primary-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  opacity: 0;
-  transform: translateY(4px);
-  transition: all var(--transition-normal) var(--bezier-smooth);
-}
-
-.nav-brand:hover .brand-text::after {
-  opacity: 0.5;
-  transform: translateY(0);
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.025em;
 }
 
 .nav-menu {
-  position: relative;
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  justify-content: space-between;
 }
 
 .nav-links {
@@ -508,6 +459,7 @@ body {
   transition: all var(--transition-normal) var(--bezier-smooth);
   position: relative;
   overflow: hidden;
+  white-space: nowrap;
 }
 
 .nav-link::before {
@@ -547,6 +499,16 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.desktop-search,
+.desktop-lang,
+.desktop-theme {
+  display: flex;
+}
+
+.nav-actions {
+  display: none;
 }
 
 .theme-toggle {
@@ -840,9 +802,27 @@ body {
   transform: translateY(-20px);
 }
 
+@keyframes gradient-calm {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 /* 响应式设计 */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .nav-menu {
+    display: none;
+  }
+
+  .nav-menu-active {
+    display: flex;
+    flex-direction: column;
     position: fixed;
     top: var(--header-height);
     left: 0;
@@ -852,18 +832,17 @@ body {
     backdrop-filter: blur(var(--blur-lg));
     -webkit-backdrop-filter: blur(var(--blur-lg));
     padding: 2rem;
-    transform: translateX(100%);
+    transform: translateX(0);
     transition: transform var(--transition-normal) var(--bezier-smooth);
     overflow-y: auto;
-  }
-
-  .nav-menu-active {
-    transform: translateX(0);
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 1rem;
   }
 
   .nav-links {
     flex-direction: column;
-    gap: 1rem;
+    width: 100%;
   }
 
   .nav-link {
@@ -871,16 +850,31 @@ body {
     padding: 1rem;
     text-align: center;
     background: var(--color-tertiary-background);
+    width: 100%;
   }
 
-  .nav-link-active {
-    transform: scale(1.05);
+  .nav-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .nav-right > .desktop-search,
+  .nav-right > .desktop-lang,
+  .nav-right > .desktop-theme {
+    display: none;
   }
 
   .menu-toggle {
     display: flex;
   }
+}
 
+@media (max-width: 768px) {
   .footer-content {
     grid-template-columns: 1fr;
     gap: 2rem;
@@ -908,5 +902,66 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary);
+}
+
+.search-trigger {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  color: var(--color-secondary-text);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: all var(--transition-normal) var(--bezier-smooth);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-trigger:hover {
+  color: var(--color-text);
+  background: var(--color-tertiary-background);
+}
+
+/* 搜索按钮样式 */
+.search-btn {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-tertiary-background);
+  color: var(--color-secondary-text);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all var(--transition-normal) var(--bezier-smooth);
+}
+
+.search-btn:hover {
+  background-color: var(--color-glass-background);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}
+
+.search-btn span {
+  margin: 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.search-btn .kbd-shortcut {
+  display: flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-tertiary-text);
+}
+
+.search-btn .kbd-shortcut kbd {
+  background: var(--color-glass-background);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  padding: 0.1rem 0.3rem;
+  font-size: 0.75rem;
+  line-height: 1;
+  margin: 0 0.15rem;
 }
 </style>
