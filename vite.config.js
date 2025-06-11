@@ -37,5 +37,6 @@ export default defineConfig({
         }
       }
     }
-  }
+  },
+  base: '/my-blog/',
 })
