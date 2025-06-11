@@ -1,184 +1,26 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from "vue";
-import { useTheme } from "./composables/useTheme";
+import { ref } from "vue";
 import BackToTop from "./components/BackToTop.vue";
 import ReadingProgress from "./components/ReadingProgress.vue";
 import PageTransition from "./components/PageTransition.vue";
-import LanguageSwitcher from "./components/LanguageSwitcher.vue";
+import HeaderMenu from "./components/HeaderMenu.vue";
 import GlobalSearch from "./components/GlobalSearch.vue";
 import AppFooter from "./components/AppFooter.vue";
-import { useI18n } from "vue-i18n";
 import { usePostsStore } from "./store/index.js";
 
-const isScrolled = ref(false);
-const isMenuOpen = ref(false);
-
-const { themeMode, currentTheme, toggleTheme, cleanup, THEME } = useTheme();
-const { t, locale } = useI18n();
 const postsStore = usePostsStore();
 
-const navItems = ref([]);
+const globalSearch = ref(null);
 
-const updateNavItems = () => {
-  navItems.value = [
-    { name: t("nav.home"), path: "/" },
-    { name: t("nav.blog"), path: "/blog" },
-    { name: t("nav.about"), path: "/about" },
-    { name: t("nav.contact"), path: "/contact" },
-  ];
+const openSearch = () => {
+  globalSearch.value?.openSearch();
 };
-
-watch(locale, updateNavItems, { immediate: true });
-
-const handleLanguageChanged = () => {
-  updateNavItems();
-};
-
-const toggleMenu = () => {
-  isMenuOpen.value = !isMenuOpen.value;
-  document.body.classList.toggle("no-scroll", isMenuOpen.value);
-};
-
-const handleScroll = () => {
-  isScrolled.value = window.scrollY > 20;
-};
-
-onMounted(() => {
-  const scrollbarWidth =
-    window.innerWidth - document.documentElement.clientWidth;
-  document.documentElement.style.setProperty(
-    "--scrollbar-width",
-    `${scrollbarWidth}px`
-  );
-
-  window.addEventListener("scroll", handleScroll);
-  window.addEventListener("language-changed", handleLanguageChanged);
-  handleScroll();
-});
-
-onUnmounted(() => {
-  window.removeEventListener("scroll", handleScroll);
-  window.removeEventListener("language-changed", handleLanguageChanged);
-  document.body.classList.remove("no-scroll");
-  cleanup();
-});
 </script>
 
 <template>
-  <div class="app" :class="{ 'dark-theme': themeMode === THEME.DARK }">
+  <div class="app">
     <ReadingProgress />
-
-    <header class="header" :class="{ 'header-scrolled': isScrolled }">
-      <nav class="nav container">
-        <div class="nav-brand">
-          <router-link to="/" class="nav-brand">
-            <div class="logo">M</div>
-            <span class="brand-name">{{ t("brand.name") }}</span>
-          </router-link>
-        </div>
-
-        <div class="nav-menu" :class="{ 'nav-menu-active': isMenuOpen }">
-          <div class="nav-links">
-            <router-link
-              v-for="item in navItems"
-              :key="item.path"
-              :to="item.path"
-              class="nav-link"
-              :class="{ 'nav-link-active': $route.path === item.path }"
-              @click="isMenuOpen = false"
-            >
-              {{ item.name }}
-            </router-link>
-          </div>
-        </div>
-
-        <div class="nav-right">
-          <button
-            class="search-btn"
-            @click="$refs.globalSearch.openSearch()"
-            :aria-label="t('search.button')"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <span>{{ t("search.button") }}</span>
-            <span class="kbd-shortcut">
-              <kbd>Ctrl</kbd><span>+</span><kbd>K</kbd>
-            </span>
-          </button>
-          <LanguageSwitcher class="desktop-lang" />
-          <button
-            class="theme-toggle desktop-theme"
-            @click="toggleTheme"
-            :title="t('theme.toggle')"
-          >
-            <span
-              class="theme-icon"
-              :class="{ 'theme-icon-dark': currentTheme === THEME.DARK }"
-            >
-              <svg
-                v-if="currentTheme === THEME.DARK"
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-                ></path>
-              </svg>
-              <svg
-                v-else
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="12" cy="12" r="5"></circle>
-                <line x1="12" y1="1" x2="12" y2="3"></line>
-                <line x1="12" y1="21" x2="12" y2="23"></line>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                <line x1="1" y1="12" x2="3" y2="12"></line>
-                <line x1="21" y1="12" x2="23" y2="12"></line>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-              </svg>
-            </span>
-          </button>
-          <button
-            class="menu-toggle"
-            @click="toggleMenu"
-            :class="{ 'menu-active': isMenuOpen }"
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-        </div>
-      </nav>
-    </header>
+    <HeaderMenu @open-search="openSearch" />
 
     <main class="main">
       <router-view v-slot="{ Component, route }">
@@ -188,7 +30,7 @@ onUnmounted(() => {
       </router-view>
     </main>
 
-    <AppFooter :is-dark="themeMode === THEME.DARK" />
+    <AppFooter />
 
     <BackToTop />
     <GlobalSearch
@@ -314,234 +156,10 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-}
-
-/* 头部导航样式 */
-.header {
-  height: var(--header-height);
-  background-color: var(--color-glass-background);
-  border-bottom: 1px solid var(--color-border);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  backdrop-filter: blur(var(--blur-lg));
-  -webkit-backdrop-filter: blur(var(--blur-lg));
-  transition: all var(--transition-normal) var(--bezier-smooth);
-}
-
-.header-scrolled {
-  background-color: var(--color-glass-background-dark);
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(var(--blur-lg)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(180%);
-}
-
-.nav {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-}
-
-.nav-brand {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  gap: 0.75rem;
-}
-
-.logo {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-lg);
-  background: var(--color-primary-gradient);
-  background-size: 150% 150%;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: 600;
-  transition: all var(--transition-slow) var(--bezier-smooth);
-  animation: gradient-calm 8s ease infinite;
-}
-
-.nav-brand:hover .logo {
-  transform: translateY(-4px) scale(1.1);
-  box-shadow: var(--shadow-xl);
-  animation-duration: 3s;
-}
-
-.brand-name {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--color-text);
-  letter-spacing: -0.025em;
-}
-
-.nav-menu {
-  display: flex;
-  align-items: center;
-  flex-grow: 1;
-  justify-content: space-between;
-}
-
-.nav-links {
-  display: flex;
-  gap: 2rem;
-}
-
-.nav-link {
-  color: var(--color-secondary-text);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: var(--nav-link-size);
-  padding: 8px 16px;
-  border-radius: var(--radius-full);
-  transition: all var(--transition-normal) var(--bezier-smooth);
-  position: relative;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.nav-link::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--color-primary);
-  opacity: 0;
-  transform: translateY(100%);
-  transition: all var(--transition-normal) var(--bezier-smooth);
-  z-index: -1;
-}
-
-.nav-link:hover {
-  color: var(--color-text);
-}
-
-.nav-link:hover::before {
-  opacity: 0.1;
-  transform: translateY(0);
-}
-
-.nav-link-active {
-  color: white;
-  background: var(--color-primary-gradient);
-  box-shadow: var(--shadow-md);
-}
-
-.nav-link-active:hover::before {
-  opacity: 0.2;
-}
-
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.desktop-search,
-.desktop-lang,
-.desktop-theme {
-  display: flex;
-}
-
-.nav-actions {
-  display: none;
-}
-
-.theme-toggle {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: var(--radius-full);
-  color: var(--color-text);
-  transition: all var(--transition-normal) var(--bezier-smooth);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.theme-toggle::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--color-primary);
-  opacity: 0;
-  transform: scale(0);
-  transition: all var(--transition-normal) var(--bezier-bounce);
-  z-index: -1;
-}
-
-.theme-toggle:hover {
-  color: white;
-  transform: scale(1.05);
-}
-
-.theme-toggle:hover::before {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.theme-icon {
-  transition: transform var(--transition-normal) var(--bezier-bounce);
-}
-
-.theme-icon svg {
-  transition: all var(--transition-normal) var(--bezier-bounce);
-}
-
-.theme-toggle:hover svg {
-  transform: scale(1.1);
-}
-
-.theme-icon-dark {
-  transform: rotate(360deg);
-}
-
-.menu-toggle {
-  display: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  flex-direction: column;
-  gap: 6px;
-  transition: all var(--transition-normal) var(--bezier-smooth);
-}
-
-.menu-toggle span {
-  display: block;
-  width: 24px;
-  height: 2px;
-  background-color: var(--color-text);
-  transition: all var(--transition-normal) var(--bezier-smooth);
-  transform-origin: center;
-}
-
-.menu-active span:nth-child(1) {
-  transform: translateY(8px) rotate(45deg);
-}
-
-.menu-active span:nth-child(2) {
-  opacity: 0;
-  transform: scaleX(0);
-}
-
-.menu-active span:nth-child(3) {
-  transform: translateY(-8px) rotate(-45deg);
+  --nav-height: 4rem;
+  --nav-background: rgba(255, 255, 255, 0.8);
+  --nav-background-dark: rgba(18, 18, 18, 0.8);
+  --blur-strength: 12px;
 }
 
 /* 主要内容区域 */
@@ -589,198 +207,146 @@ body {
   }
 
   .brand-name {
-    font-size: 1rem;
-  }
-
-  .logo {
-    width: 28px;
-    height: 28px;
-    font-size: 16px;
-  }
-
-  .search-btn {
-    padding: 0.3rem 0.5rem;
-  }
-
-  .search-btn span:not(.kbd-shortcut) {
-    display: none;
+    font-size: 1.125rem;
   }
 
   .nav-menu {
-    display: none;
-    opacity: 0;
-    transform: translateY(-20px);
+    position: fixed;
+    top: var(--nav-height);
+    left: 0;
+    width: 100%;
+    height: calc(100vh - var(--nav-height));
+    background: var(--nav-background);
+    backdrop-filter: blur(var(--blur-strength));
+    -webkit-backdrop-filter: blur(var(--blur-strength));
+    padding: 2rem;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    overflow-y: auto;
+  }
+
+  .dark-theme .nav-menu {
+    background: var(--nav-background-dark);
   }
 
   .nav-menu-active {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: var(--header-height);
-    left: 0;
-    right: 0;
-    height: calc(100vh - var(--header-height));
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(25px) saturate(200%);
-    -webkit-backdrop-filter: blur(25px) saturate(200%);
-    padding: 2rem 1.5rem;
-    opacity: 1;
-    transform: translateY(0);
-    transition: all var(--transition-normal) cubic-bezier(0.65, 0, 0.35, 1);
-    overflow-y: auto;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 2rem;
-    z-index: 999;
-  }
-
-  .dark-theme .nav-menu-active {
-    background: rgba(15, 23, 42, 0.95);
-  }
-
-  .nav-menu-active::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-        circle at 100% 0%,
-        rgba(var(--color-primary-rgb), 0.15) 0%,
-        transparent 25%
-      ),
-      radial-gradient(
-        circle at 0% 100%,
-        rgba(var(--color-accent-rgb), 0.15) 0%,
-        transparent 25%
-      );
-    pointer-events: none;
-    opacity: 0.5;
+    transform: translateX(0);
   }
 
   .nav-links {
+    display: flex;
     flex-direction: column;
-    width: 100%;
-    max-width: 360px;
     gap: 1rem;
-    padding: 0;
-    position: relative;
   }
 
   .nav-link {
-    font-size: 1.125rem;
-    padding: 1.25rem;
-    text-align: center;
-    background: rgba(255, 255, 255, 0.5);
-    width: 100%;
-    border: 1px solid rgba(var(--color-primary-rgb), 0.1);
-    border-radius: 20px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
-      0 2px 4px -1px rgba(0, 0, 0, 0.03),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-    transition: all 0.3s cubic-bezier(0.65, 0, 0.35, 1);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 500;
-    letter-spacing: 0.01em;
-    color: var(--color-text);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-
-  .dark-theme .nav-link {
-    background: rgba(30, 41, 59, 0.5);
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2),
-      0 2px 4px -1px rgba(0, 0, 0, 0.1),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-  }
-
-  .nav-link::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      135deg,
-      transparent,
-      rgba(var(--color-primary-rgb), 0.1),
-      transparent
-    );
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    font-size: 1.25rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
   }
 
   .nav-link:hover {
-    transform: translateY(-2px);
-    border-color: rgba(var(--color-primary-rgb), 0.3);
-    box-shadow: 0 12px 20px -5px rgba(var(--color-primary-rgb), 0.15),
-      0 4px 6px -2px rgba(0, 0, 0, 0.05),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.2);
-  }
-
-  .nav-link:hover::before {
-    opacity: 1;
+    background: rgba(255, 255, 255, 0.05);
   }
 
   .nav-link-active {
-    background: linear-gradient(
-      135deg,
-      rgba(var(--color-primary-rgb), 0.15),
-      rgba(var(--color-primary-rgb), 0.05)
-    );
-    border-color: rgba(var(--color-primary-rgb), 0.5);
-    color: var(--color-primary);
-    font-weight: 600;
-  }
-
-  .dark-theme .nav-link-active {
-    background: linear-gradient(
-      135deg,
-      rgba(var(--color-primary-rgb), 0.25),
-      rgba(var(--color-primary-rgb), 0.15)
-    );
+    background: var(--color-primary-gradient);
+    border-color: transparent;
+    color: white;
   }
 
   .nav-actions {
+    margin-top: auto;
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .mobile-theme {
     width: 100%;
-    max-width: 360px;
-    margin-top: auto;
-    padding-top: 2rem;
-    position: relative;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
 
-  .nav-actions::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80%;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(var(--color-primary-rgb), 0.2),
-      transparent
-    );
-  }
-
-  .nav-right {
-    gap: 0.5rem;
-  }
-
-  .nav-right > .desktop-search,
   .nav-right > .desktop-lang,
   .nav-right > .desktop-theme {
     display: none;
   }
 
+  .nav-actions .language-switcher {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .nav-actions .lang-btn,
+  .mobile-theme {
+    flex: 1;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    color: var(--color-text);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .nav-actions .lang-btn:hover,
+  .mobile-theme:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .nav-actions .lang-btn.active {
+    background: var(--color-primary-gradient);
+    border-color: transparent;
+    color: white;
+  }
+
   .menu-toggle {
     display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .menu-toggle span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background-color: var(--color-text);
+    transition: all 0.3s ease;
+  }
+
+  .menu-active span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+  }
+
+  .menu-active span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .menu-active span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
   }
 }
 
@@ -790,39 +356,27 @@ body {
   }
 
   .logo {
-    width: 24px;
-    height: 24px;
-    font-size: 14px;
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
   }
 
   .brand-name {
-    font-size: 0.875rem;
+    font-size: 1rem;
   }
 
   .nav-menu-active {
-    padding: 1rem;
-  }
-
-  .nav-links {
-    padding: 0.5rem 0;
+    padding: 1.5rem 1rem;
   }
 
   .nav-link {
-    font-size: 0.875rem;
-    padding: 0.625rem;
-  }
-
-  .search-btn {
-    padding: 0.25rem 0.4rem;
-  }
-
-  .search-btn .kbd-shortcut {
-    display: none;
+    font-size: 0.9375rem;
+    padding: 0.875rem;
   }
 
   .nav-actions {
-    padding-top: 0.75rem;
-    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
   }
 }
 
@@ -992,5 +546,306 @@ body {
 .no-scroll {
   overflow: hidden !important;
   padding-right: var(--scrollbar-width, 0px);
+}
+
+/* 添加过渡动画 */
+.nav-menu {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-menu-enter-active,
+.nav-menu-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.nav-menu-enter-from,
+.nav-menu-leave-to {
+  transform: translateX(100%);
+}
+
+/* 添加背景遮罩动画 */
+.nav-menu-active::before {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 桌面端样式 */
+@media (min-width: 1025px) {
+  .nav-menu {
+    position: static;
+    height: auto;
+    padding: 0;
+    transform: none;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .mobile-theme {
+    display: none;
+  }
+}
+
+/* 隐藏桌面端组件 */
+@media (max-width: 1024px) {
+  .desktop-theme,
+  .desktop-lang {
+    display: none;
+  }
+}
+
+/* 头部导航样式 */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--nav-height);
+  z-index: 100;
+  transition: all 0.3s ease;
+  background: var(--nav-background);
+  backdrop-filter: blur(var(--blur-strength));
+  -webkit-backdrop-filter: blur(var(--blur-strength));
+}
+
+.dark-theme .header {
+  background: var(--nav-background-dark);
+}
+
+.header-scrolled {
+  background: var(--color-glass-background);
+  box-shadow: var(--shadow-md);
+}
+
+.nav {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.logo {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  transition: transform 0.35s var(--bezier-bounce), box-shadow 0.35s;
+}
+
+.logo:hover {
+  transform: scale(1.12) rotate(3deg);
+  box-shadow: var(--shadow-glow);
+}
+
+.brand-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.desktop-lang,
+.desktop-theme {
+  display: flex;
+}
+
+.nav-actions {
+  display: none;
+}
+
+.theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--radius-full);
+  color: var(--color-text);
+  transition: all var(--transition-normal) var(--bezier-smooth);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-primary);
+  opacity: 0;
+  transform: scale(0);
+  transition: all var(--transition-normal) var(--bezier-bounce);
+  z-index: -1;
+}
+
+.theme-toggle:hover {
+  color: white;
+  transform: scale(1.05);
+}
+
+.theme-toggle:hover::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.theme-icon {
+  transition: transform var(--transition-normal) var(--bezier-bounce);
+}
+
+.theme-icon svg {
+  transition: all var(--transition-normal) var(--bezier-bounce);
+}
+
+.theme-toggle:hover svg {
+  transform: scale(1.1);
+}
+
+.theme-icon-dark {
+  transform: rotate(360deg);
+}
+
+.menu-toggle {
+  display: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin: -0.5rem;
+  position: relative;
+  z-index: 101;
+}
+
+@media (max-width: 1024px) {
+  .menu-toggle {
+    display: block;
+  }
+}
+
+.menu-icon-wrapper {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hamburger-line {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background-color: var(--color-text);
+  border-radius: 2px;
+  position: absolute;
+  transition: all 0.3s ease;
+}
+
+.line-top {
+  top: 4px;
+}
+
+.line-middle {
+  top: 11px;
+}
+
+.line-bottom {
+  top: 18px;
+}
+
+.open .line-top {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.open .line-middle {
+  opacity: 0;
+}
+
+.open .line-bottom {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* desktop nav link aesthetics */
+.nav-link {
+  position: relative;
+  font-weight: 500;
+  color: var(--color-text);
+  transition: color 0.3s ease;
+}
+.nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-primary);
+  border-radius: var(--radius-sm);
+  transition: width 0.3s ease;
+}
+
+/* hover underline */
+.nav-link:hover {
+  color: var(--color-primary);
+}
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* active page indicator */
+.nav-link-active {
+  color: var(--color-primary);
+}
+.nav-link-active::after {
+  width: 100%;
 }
 </style>

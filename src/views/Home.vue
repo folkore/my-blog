@@ -55,7 +55,7 @@ const navigateToPost = (id) => {
         <div class="hero-content">
           <div class="hero-avatar">
             <img
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+              src="https://api.dicebear.com/9.x/avataaars/svg?seed=Felix"
               alt="头像"
               class="avatar-image"
             />
