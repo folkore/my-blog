@@ -38,5 +38,5 @@ export default defineConfig({
       }
     }
   },
-  base: '/my-blog/',
+  base: '/my-blog.github.io/',
 })
