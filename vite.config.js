@@ -4,6 +4,7 @@ import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/my-blog/', // 添加基础路径配置
   plugins: [vue()],
   resolve: {
     alias: {
