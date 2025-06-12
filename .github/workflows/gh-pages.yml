@@ -20,13 +20,18 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18          # 或你项目所需的版本
-          cache: npm
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
       - name: Install deps
-        run: npm ci                 # 如果用 pnpm / yarn 自行替换
+        run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: npm run build          # Vite 默认把文件打到 dist
+        run: pnpm run build          # Vite 默认把文件打到 dist
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
