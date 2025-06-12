@@ -32,10 +32,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vue-vendor': ['vue', 'vue-router', 'pinia'],
-          'ui-vendor': ['@headlessui/vue', '@heroicons/vue']
+          'vue-vendor': ['vue', 'vue-router', 'pinia']
         }
       }
     }
-  },
+  }
 })
