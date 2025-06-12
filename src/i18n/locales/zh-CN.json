@@ -45,6 +45,7 @@
     "readTime": "{minutes} 分钟阅读",
     "readTimeSuffix": "分钟阅读",
     "postNotFound": "未找到指定的文章",
+    "contentNotFound": "未找到文章内容，请检查文章文件是否存在",
     "noComments": "暂无评论，来发表第一条评论吧！",
     "commentCount": "评论 ({count})",
     "postComment": "发表评论",

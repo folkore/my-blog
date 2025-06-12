@@ -16,6 +16,7 @@ const { currentTheme, toggleTheme, cleanup, THEME } = useTheme();
 // 多语言与导航
 const { t, locale } = useI18n();
 const navItems = ref([]);
+9;
 
 const updateNavItems = () => {
   navItems.value = [

@@ -37,5 +37,7 @@ export default defineConfig({
         }
       }
     }
-  }
+  },
+  // 添加 raw 加载器配置
+  assetsInclude: ['**/*.md'],
 })

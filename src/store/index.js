@@ -1,16 +1,58 @@
 import { defineStore } from 'pinia';
+import { loadMarkdownContent, parseMarkdown } from '../utils/markdown-loader';
 
 // 博客文章状态管理
 export const usePostsStore = defineStore('posts', {
   state: () => ({
-    // 博客文章列表
+    // 文章元数据列表
     posts: [
+      {
+        id: 8,
+        title: '测试文章',
+        slug: 'debug-test',
+        cover: "https://picsum.photos/id/187/1200/600",
+        author: {
+          name: "测试用户",
+          avatar: "https://picsum.photos/id/1012/200/200",
+          bio: "测试账号",
+        },
+        date: '2024-04-10',
+        tags: ['测试'],
+        excerpt: '这是一个用于测试 Markdown 加载的简单文章'
+      },
+      {
+        id: 7,
+        title: 'Markdown 格式文章示例',
+        slug: 'markdown-example',
+        cover: "https://picsum.photos/id/186/1200/600",
+        author: {
+          name: "李四",
+          avatar: "https://picsum.photos/id/1013/200/200",
+          bio: "全栈工程师，热爱开源",
+        },
+        date: '2024-03-22',
+        tags: ['Markdown', '教程', '前端技术'],
+        excerpt: '这篇文章展示了 Markdown 的各种语法和格式化选项，包括标题、列表、代码块、表格和其他高级特性。'
+      },
+      {
+        id: 6,
+        title: '使用 GitHub Actions 自动部署 Vue 项目到 GitHub Pages',
+        slug: 'github-pages-auto-deploy',
+        cover: "https://picsum.photos/id/185/1200/600",
+        author: {
+          name: "张三",
+          avatar: "https://picsum.photos/id/1012/200/200",
+          bio: "前端开发工程师，Vue.js 爱好者",
+        },
+        date: '2024-03-21',
+        tags: ['GitHub Actions', 'Vue.js', 'CI/CD', '自动部署'],
+        excerpt: '详细介绍如何使用 GitHub Actions 将 Vue.js 项目自动部署到 GitHub Pages，包括配置过程和常见问题解决方案。'
+      },
       {
         id: 1,
         title: '开始使用 Vue 3 和组合式 API',
+        slug: 'vue3-composition-api',
         cover: "https://picsum.photos/id/180/1200/600",
-        content: 'Vue 3 引入了组合式 API，它提供了一种更灵活的方式来组织组件逻辑。与Vue 2的选项式API不同，组合式API允许我们按照逻辑关注点组织代码，而不是按选项类型。这使得代码更加可读、可维护和可重用。',
-        path: '/blog/vue3-composition-api',
         author: {
           name: "张三",
           avatar: "https://picsum.photos/id/1012/200/200",
@@ -23,9 +65,8 @@ export const usePostsStore = defineStore('posts', {
       {
         id: 2,
         title: 'Vue Router 4 新特性详解',
+        slug: 'vue-router-4-features',
         cover: "https://picsum.photos/id/181/1200/600",
-        content: 'Vue Router 4是专为Vue 3设计的路由库。它提供了许多新功能和改进，如更好的TypeScript支持、组合式API集成和更好的性能。在本文中，我们将深入探讨Vue Router 4的新特性，以及如何在Vue 3项目中有效地使用它们。',
-        path: '/blog/vue-router-4-features',
         author: {
           name: "李四",
           avatar: "https://picsum.photos/id/1013/200/200",
@@ -38,9 +79,8 @@ export const usePostsStore = defineStore('posts', {
       {
         id: 3,
         title: 'Pinia: Vue 的下一代状态管理库',
+        slug: 'pinia-state-management',
         cover: "https://picsum.photos/id/182/1200/600",
-        content: 'Pinia 是 Vue 的官方状态管理库，旨在替代 Vuex。它提供了更简单的 API、更好的 TypeScript 支持和模块化设计，无需创建复杂的模块树。Pinia 原生支持 Vue 3 的组合式 API，同时也与 Vue 2 兼容。在本文中，我们将学习如何使用 Pinia 来管理 Vue 应用程序的状态。',
-        path: '/blog/pinia-state-management',
         author: {
           name: "王五",
           avatar: "https://picsum.photos/id/1014/200/200",
@@ -53,9 +93,8 @@ export const usePostsStore = defineStore('posts', {
       {
         id: 4,
         title: '使用 Vite 加速前端开发',
+        slug: 'vite-frontend-development',
         cover: "https://picsum.photos/id/183/1200/600",
-        content: 'Vite 是一个现代前端构建工具，由 Vue 的创建者尤雨溪开发。它利用 ES 模块的特性提供了极快的开发服务器启动和模块热更新。与传统的 webpack 相比，Vite 不需要在开发过程中打包整个应用，而是按需编译。这大大缩短了开发时的加载时间和提高了开发体验。',
-        path: '/blog/vite-frontend-development',
         author: {
           name: "赵六",
           avatar: "https://picsum.photos/id/1015/200/200",
@@ -68,9 +107,8 @@ export const usePostsStore = defineStore('posts', {
       {
         id: 5,
         title: 'CSS 变量在主题切换中的应用',
+        slug: 'css-variables-theming',
         cover: "https://picsum.photos/id/184/1200/600",
-        content: 'CSS 变量（自定义属性）为 Web 开发提供了强大的主题定制能力。通过定义和使用 CSS 变量，我们可以轻松创建和切换网站的多种主题，如亮色和暗色模式。这种方法比传统的主题切换方案更加灵活和可维护，因为它避免了重复的 CSS 规则和复杂的类名切换。',
-        path: '/blog/css-variables-theming',
         author: {
           name: "孙七",
           avatar: "https://picsum.photos/id/1016/200/200",
@@ -81,6 +119,9 @@ export const usePostsStore = defineStore('posts', {
         excerpt: 'CSS 变量（自定义属性）为 Web 开发提供了强大的主题定制能力...'
       }
     ],
+    
+    // 缓存文章内容
+    postContents: {},
   }),
 
   getters: {
@@ -92,8 +133,15 @@ export const usePostsStore = defineStore('posts', {
       return state.posts.find(post => post.id === parseInt(id));
     },
 
+    // 通过 Slug 获取文章
     getPostBySlug: (state) => (slug) => {
-      return state.posts.find(post => post.id === parseInt(slug));
+      // 先通过数字 ID 尝试查找
+      if (!isNaN(parseInt(slug))) {
+        return state.posts.find(post => post.id === parseInt(slug));
+      }
+      
+      // 如果不是数字，则通过 slug 查找
+      return state.posts.find(post => post.slug === slug);
     },
 
     // 获取所有标签
@@ -116,7 +164,6 @@ export const usePostsStore = defineStore('posts', {
       return state.posts.filter(post => {
         return (
           post.title.toLowerCase().includes(searchTerm) ||
-          post.content.toLowerCase().includes(searchTerm) ||
           post.excerpt.toLowerCase().includes(searchTerm)
         );
       });
@@ -124,10 +171,38 @@ export const usePostsStore = defineStore('posts', {
   },
 
   actions: {
+    // 获取文章内容
+    async getPostContent(slug) {
+      // 如果已经有缓存，直接返回
+      if (this.postContents[slug]) {
+        return this.postContents[slug];
+      }
+      
+      try {
+        // 加载 Markdown 文件内容
+        const content = await loadMarkdownContent(slug);
+        
+        if (content) {
+          // 缓存内容
+          this.postContents[slug] = content;
+          return content;
+        }
+        
+        return null;
+      } catch (error) {
+        console.error('Failed to load post content:', error);
+        return null;
+      }
+    },
+    
     // 添加新文章
     addPost(post) {
+      const newId = this.posts.length > 0 
+        ? Math.max(...this.posts.map(p => p.id)) + 1 
+        : 1;
+      
       this.posts.push({
-        id: this.posts.length + 1,
+        id: newId,
         ...post
       });
     },

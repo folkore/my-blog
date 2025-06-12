@@ -45,6 +45,7 @@
       "readTime": "{minutes} min read",
       "readTimeSuffix": "min read",
       "postNotFound": "The requested post was not found",
+      "contentNotFound": "Article content not found, please check if the article file exists",
       "noComments": "No comments yet. Be the first to comment!",
       "commentCount": "Comments ({count})",
       "postComment": "Post Comment",

@@ -3,6 +3,8 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import './style.css'
+// 导入 Markdown 样式
+import './assets/styles/markdown.css'
 
 // 导入自定义指令
 import lazyLoad from './directives/lazyLoad'
