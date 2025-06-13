@@ -6,14 +6,17 @@ export default {
       threshold: 0.1
     }
     
+    // 获取当前环境的base路径
+    const baseUrl = import.meta.env.BASE_URL || '/'
+    
     function loadImage() {
       const imageElement = el.tagName === 'IMG' ? el : el.querySelector('img')
       
       if (imageElement) {
         const imgUrl = binding.value
         
-        // 设置占位图
-        imageElement.src = '/placeholder.svg'
+        // 设置占位图，使用baseUrl确保路径正确
+        imageElement.src = `${baseUrl}placeholder.svg`
         
         // 添加加载动画类
         imageElement.classList.add('image-loading')
@@ -32,8 +35,8 @@ export default {
         }
         
         img.onerror = () => {
-          // 加载失败时显示默认图片
-          imageElement.src = '/placeholder.svg'
+          // 加载失败时显示默认图片，使用baseUrl确保路径正确
+          imageElement.src = `${baseUrl}placeholder.svg`
           imageElement.classList.remove('image-loading')
           observer.unobserve(el)
         }

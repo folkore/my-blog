@@ -14,7 +14,7 @@ const props = defineProps({
   },
 });
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const router = useRouter();
 
 const isOpen = ref(false);
@@ -45,7 +45,17 @@ const highlightParts = (text, query) => {
   }));
 };
 
-const getHighlightedTitle = computed(() => {
+const formatDate = (dateStr) => {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString(locale.value, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+const highlightedResults = computed(() => {
   return searchResults.value.map((result) => ({
     ...result,
     titleParts: highlightParts(result.title, searchQuery.value),
@@ -55,6 +65,7 @@ const getHighlightedTitle = computed(() => {
           searchQuery.value
         )
       : [],
+    formattedDate: formatDate(result.date),
   }));
 });
 
@@ -238,18 +249,26 @@ defineExpose({
           <div class="search-content">
             <div v-if="searchResults.length > 0" class="search-results">
               <div
-                v-for="(result, index) in getHighlightedTitle"
+                v-for="(result, index) in highlightedResults"
                 :key="result.id"
                 class="search-result-item"
                 :class="{ active: index === activeIndex }"
                 @click="handleResultClick(result)"
                 @mouseover="activeIndex = index"
               >
-                <div class="result-icon">
+                <div class="result-thumb">
+                  <img
+                    v-if="result.cover"
+                    :src="result.cover"
+                    alt="thumbnail"
+                    class="thumb-img"
+                  />
                   <svg
+                    v-else
+                    class="thumb-icon"
                     xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
+                    width="20"
+                    height="20"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -263,7 +282,6 @@ defineExpose({
                     <polyline points="14 2 14 8 20 8"></polyline>
                     <line x1="16" y1="13" x2="8" y2="13"></line>
                     <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
                   </svg>
                 </div>
                 <div class="result-content">
@@ -277,6 +295,26 @@ defineExpose({
                       }}</span>
                       <template v-else>{{ part.text }}</template>
                     </template>
+                  </div>
+                  <div
+                    class="result-meta"
+                    v-if="result.formattedDate || result.tags?.length"
+                  >
+                    <span v-if="result.formattedDate" class="result-date">{{
+                      result.formattedDate
+                    }}</span>
+                    <span
+                      v-if="result.formattedDate && result.tags?.length"
+                      class="dot"
+                      >·</span
+                    >
+                    <span
+                      v-for="tag in (result.tags || []).slice(0, 3)"
+                      :key="tag"
+                      class="result-tag"
+                    >
+                      {{ tag }}
+                    </span>
                   </div>
                   <div v-if="result.content" class="result-excerpt">
                     <template
@@ -538,14 +576,28 @@ defineExpose({
   border-color: var(--color-border);
 }
 
-.result-icon {
+.result-thumb {
   flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-md);
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  background: var(--color-tertiary-background);
   color: var(--color-secondary-text);
+}
+
+.thumb-img {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
+.thumb-icon {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .result-content {
@@ -561,6 +613,33 @@ defineExpose({
   color: var(--color-text);
   font-size: 1.125rem;
   margin-bottom: 0.25rem;
+}
+
+.result-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-secondary-text);
+  margin-bottom: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.result-date {
+  white-space: nowrap;
+}
+
+.result-tag {
+  background: var(--color-primary-gradient);
+  color: #fff;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+}
+
+.dot {
+  opacity: 0.6;
 }
 
 .result-excerpt {

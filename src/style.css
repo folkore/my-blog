@@ -144,6 +144,7 @@ button:focus-visible {
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  width: 100%; /* 让应用容器始终填满水平空间，防止宽度随内容收缩 */
 }
 
 /* 图片懒加载相关样式 */

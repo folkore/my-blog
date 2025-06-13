@@ -7,6 +7,7 @@ import HeaderMenu from "./components/HeaderMenu.vue";
 import GlobalSearch from "./components/GlobalSearch.vue";
 import AppFooter from "./components/AppFooter.vue";
 import { usePostsStore } from "./store/index.js";
+import Live2DPet from "./components/Live2DPet.vue";
 
 const postsStore = usePostsStore();
 
@@ -33,6 +34,7 @@ const openSearch = () => {
     <AppFooter />
 
     <BackToTop />
+    <Live2DPet />
     <GlobalSearch
       ref="globalSearch"
       :posts="postsStore.posts"
@@ -52,38 +54,18 @@ const openSearch = () => {
   --color-accent: #00d4ff;
   --color-accent-gradient: linear-gradient(135deg, #00d4ff, #0066ff);
 
-  /* 背景色 */
-  --color-background: #ffffff;
-  --color-secondary-background: #f8fafc;
-  --color-tertiary-background: #f1f5f9;
-  --color-glass-background: rgba(255, 255, 255, 0.85);
-  --color-glass-background-dark: rgba(255, 255, 255, 0.05);
+  /* RGB值用于透明度计算 */
+  --color-primary-rgb: 0, 102, 255;
+  --color-accent-rgb: 0, 212, 255;
+  --color-success-rgb: 16, 185, 129;
 
-  /* 文本色 */
-  --color-text: #1e293b;
-  --color-secondary-text: #64748b;
-  --color-tertiary-text: #94a3b8;
-
-  /* 边框和阴影 */
-  --color-border: rgba(226, 232, 240, 0.8);
-  --color-shadow: rgba(15, 23, 42, 0.08);
-  --color-shadow-lg: rgba(15, 23, 42, 0.12);
-  --shadow-sm: 0 1px 2px 0 var(--color-shadow);
-  --shadow-md: 0 4px 6px -1px var(--color-shadow),
-    0 2px 4px -2px var(--color-shadow);
-  --shadow-lg: 0 10px 15px -3px var(--color-shadow),
-    0 4px 6px -4px var(--color-shadow);
-  --shadow-xl: 0 20px 25px -5px var(--color-shadow-lg),
-    0 8px 10px -6px var(--color-shadow);
-  --shadow-inner: inset 0 2px 4px 0 var(--color-shadow);
-  --shadow-glow: 0 0 15px var(--color-primary);
-
-  /* 布局 */
+  /* 布局尺寸 */
   --header-height: 72px;
+  --header-height-mobile: 64px;
   --content-width: 1200px;
   --nav-link-size: 0.875rem;
 
-  /* 动画 */
+  /* 动画时间 */
   --transition-fast: 0.2s;
   --transition-normal: 0.3s;
   --transition-slow: 0.5s;
@@ -96,14 +78,17 @@ const openSearch = () => {
   --radius-lg: 12px;
   --radius-full: 9999px;
 
-  /* 模糊 */
+  /* 模糊效果 */
   --blur-sm: 4px;
   --blur-md: 8px;
   --blur-lg: 12px;
 
-  /* 添加 CSS 变量 */
-  --color-primary-rgb: 0, 102, 255;
-  --color-accent-rgb: 0, 212, 255;
+  /* Z-index层级 */
+  --z-header: 100;
+  --z-dropdown: 200;
+  --z-modal: 300;
+  --z-tooltip: 400;
+  --z-progress: 500;
 }
 
 .dark-theme {
@@ -388,6 +373,12 @@ body {
 
   .footer-links {
     grid-template-columns: 1fr;
+  }
+
+  :root {
+    --header-height: var(--header-height-mobile);
+    --content-width: 100%;
+    --nav-link-size: 0.8125rem;
   }
 }
 

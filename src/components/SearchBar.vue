@@ -86,6 +86,8 @@ const handleInput = () => {
 .search-container {
   width: 100%;
   margin-bottom: 1.5rem;
+  max-width: var(--content-width);
+  margin: 0 auto;
 }
 
 .search-bar {
@@ -93,10 +95,12 @@ const handleInput = () => {
   display: flex;
   align-items: center;
   width: 100%;
+  max-width: 100%;
 }
 
 .search-bar input {
   width: 100%;
+  min-width: 0;
   padding: 0.8rem 3rem 0.8rem 1rem;
   border-radius: 8px;
   border: 1px solid var(--border-color);

@@ -86,7 +86,7 @@ onUnmounted(() => {
     max-height: calc(100vh - 120px);
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: var(--color-primary) transparent;
+    /* scrollbar-color: var(--color-primary) transparent; */
   }
 
   .table-of-contents::-webkit-scrollbar {
