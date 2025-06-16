@@ -30,6 +30,10 @@ function loadScript(src) {
 function initWidget() {
   // 避免重复初始化
   if (window.__live2d_initialized) return;
+
+  // 检查是否为移动端
+  if (window.innerWidth <= 768) return;
+
   window.__live2d_initialized = true;
 
   // @ts-ignore 忽略全局对象类型检查
@@ -41,15 +45,14 @@ function initWidget() {
       scale: 1,
     },
     display: {
-      position: "right",
+      position: "left",
       width: 150,
       height: 280,
       hOffset: 0,
       vOffset: -20,
     },
     mobile: {
-      show: true,
-      scale: 0.5,
+      show: false, // 禁用移动端显示
     },
     react: {
       opacityDefault: 0.8,
@@ -94,7 +97,6 @@ function randomMessage() {
   const idx = Math.floor(Math.random() * messages.length);
   // 去掉气泡改用控制台输出
   // eslint-disable-next-line no-console
-  console.log("Live2D:", messages[idx]);
 }
 
 function attachInteractions() {
@@ -123,7 +125,6 @@ function attachInteractions() {
 
     canvas.addEventListener("mouseover", () => {
       // 悬停提示示例
-      console.log("Live2D: 把鼠标放在我身上痒痒的~");
     });
   }
 
@@ -167,8 +168,12 @@ function attachInteractions() {
       const vpH = window.innerHeight;
       initRight = vpW - rect.right;
       initBottom = vpH - rect.bottom;
-      canvas.style.cursor = "move";
+      canvas.style.cursor = "pointer";
       canvas.style.position = "fixed";
+      canvas.style.right = `${initRight}px`;
+      canvas.style.bottom = `${initBottom}px`;
+      canvas.style.left = "auto";
+      canvas.style.top = "auto";
     };
 
     const onDrag = (e) => {
@@ -217,10 +222,33 @@ onMounted(async () => {
     window.__live2d_initialized = false;
     initWidget();
   }
-});
 
-onUnmounted(() => {
-  clearTimeout(hideTimer);
+  // 添加窗口大小变化监听
+  const handleResize = () => {
+    const canvas =
+      document.getElementById("live2dcanvas") ||
+      document.querySelector("#live2d-widget canvas, canvas[id^='live2d']");
+
+    if (window.innerWidth <= 768) {
+      if (canvas) {
+        canvas.style.display = "none";
+      }
+    } else {
+      if (!window.__live2d_initialized) {
+        initWidget();
+      } else if (canvas) {
+        canvas.style.display = "block";
+      }
+    }
+  };
+
+  window.addEventListener("resize", handleResize);
+
+  // 在组件卸载时移除监听器
+  onUnmounted(() => {
+    window.removeEventListener("resize", handleResize);
+    clearTimeout(hideTimer);
+  });
 });
 
 // 监听 Live2D 初始化完成后再绑定事件
@@ -252,5 +280,13 @@ observer.observe(document.body, { childList: true, subtree: true });
 #live2dcanvas,
 #live2d-widget canvas {
   pointer-events: auto !important;
+}
+
+/* 在移动端隐藏Live2D组件 */
+@media (max-width: 768px) {
+  #live2dcanvas,
+  #live2d-widget canvas {
+    display: none !important;
+  }
 }
 </style>

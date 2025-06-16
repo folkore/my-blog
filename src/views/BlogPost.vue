@@ -124,6 +124,28 @@ const handleCommentAdded = (newComment) => {
     <!-- 文章专用阅读进度条 -->
     <ReadingProgress v-if="blogPost" target=".blog-post-content" />
 
+    <!-- 固定返回按钮 -->
+    <button
+      class="floating-back-button"
+      @click="backToList"
+      :title="t('blog.backToList')"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <!-- 左箭头，与 BackToTop 图标风格保持一致 -->
+        <polyline points="15 18 9 12 15 6" />
+      </svg>
+    </button>
+
     <!-- 加载状态 -->
     <div v-if="isLoading" class="loading-state container">
       <div class="spinner"></div>
@@ -485,5 +507,37 @@ const handleCommentAdded = (newComment) => {
   to {
     opacity: 1;
   }
+}
+
+/* 固定返回按钮样式 */
+.floating-back-button {
+  position: fixed;
+  bottom: 90px;
+  right: 30px;
+  z-index: 99;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--card-shadow);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  padding: 0;
+}
+
+.floating-back-button:hover {
+  transform: translateY(-5px);
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.floating-back-button svg {
+  width: 24px;
+  height: 24px;
 }
 </style>

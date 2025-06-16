@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { throttle } from "lodash-es";
 
 const router = useRouter();
 const { t } = useI18n();
@@ -40,6 +41,64 @@ const latestPosts = ref([
 const navigateToPost = (id) => {
   router.push(`/blog/${id}`);
 };
+
+const avatarUrl = ref("");
+const avatarLoaded = ref(false);
+const heroAvatarRef = ref(null);
+let observer = null;
+
+const handleAvatarMove = throttle((e) => {
+  if (!heroAvatarRef.value) return;
+  const rect = heroAvatarRef.value.getBoundingClientRect();
+  const offsetX = e.clientX - rect.left - rect.width / 2;
+  const offsetY = e.clientY - rect.top - rect.height / 2;
+  const tiltX = (offsetY / rect.height) * 15; // max 15deg
+  const tiltY = (-offsetX / rect.width) * 15;
+  heroAvatarRef.value.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+});
+
+const resetAvatarTilt = () => {
+  if (heroAvatarRef.value) {
+    heroAvatarRef.value.style.transform = "";
+  }
+};
+
+onMounted(async () => {
+  try {
+    // 调用 waifu.pics API 获取随机二次元头像
+    const res = await fetch("https://api.waifu.pics/sfw/waifu");
+    const data = await res.json();
+    avatarUrl.value = data.url;
+  } catch (error) {
+    // 如果请求失败，可在控制台查看原因，或回退到占位图
+    console.error("获取动漫头像失败:", error);
+  }
+
+  // IntersectionObserver 逻辑
+  if (heroAvatarRef.value) {
+    observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (heroAvatarRef.value) {
+            // 根据元素是否可见来控制动画的播放状态
+            heroAvatarRef.value.style.animationPlayState = entry.isIntersecting
+              ? "running"
+              : "paused";
+          }
+        });
+      },
+      { threshold: 0.1 } // 可见度达到10%时触发
+    );
+    observer.observe(heroAvatarRef.value);
+  }
+});
+
+onUnmounted(() => {
+  // 组件卸载时停止观察，清理资源
+  if (observer && heroAvatarRef.value) {
+    observer.unobserve(heroAvatarRef.value);
+  }
+});
 </script>
 
 <template>
@@ -53,11 +112,21 @@ const navigateToPost = (id) => {
       </div>
       <div class="container">
         <div class="hero-content">
-          <div class="hero-avatar">
+          <div
+            class="hero-avatar"
+            :class="{ loading: !avatarLoaded }"
+            ref="heroAvatarRef"
+            @mousemove="handleAvatarMove"
+            @mouseleave="resetAvatarTilt"
+          >
+            <div v-if="!avatarLoaded" class="avatar-placeholder"></div>
             <img
-              src="https://api.dicebear.com/9.x/avataaars/svg?seed=Felix"
+              v-if="avatarUrl"
+              :src="avatarUrl"
               alt="头像"
               class="avatar-image"
+              :class="{ loaded: avatarLoaded }"
+              @load="avatarLoaded = true"
             />
           </div>
           <h1 class="hero-title">{{ t("home.hero.title") }}</h1>
@@ -65,9 +134,8 @@ const navigateToPost = (id) => {
           <div class="hero-tags">
             <span class="hero-tag">Vue.js</span>
             <span class="hero-tag">React</span>
-            <span class="hero-tag">Node.js</span>
             <span class="hero-tag">TypeScript</span>
-            <span class="hero-tag">全栈开发</span>
+            <span class="hero-tag">前端开发</span>
           </div>
           <div class="hero-social">
             <a
@@ -226,27 +294,8 @@ const navigateToPost = (id) => {
                 <polyline points="2 12 12 17 22 12"></polyline>
               </svg>
             </div>
-            <h3>前端开发</h3>
-            <p>Vue.js, React, TypeScript</p>
-          </div>
-          <div class="tech-card">
-            <div class="tech-icon">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
-              </svg>
-            </div>
-            <h3>后端开发</h3>
-            <p>Node.js, Python, Go</p>
+            <h3>前端框架</h3>
+            <p>Vue.js, React, Solid.js</p>
           </div>
           <div class="tech-card">
             <div class="tech-icon">
@@ -266,8 +315,27 @@ const navigateToPost = (id) => {
                 <line x1="12" y1="17" x2="12" y2="21"></line>
               </svg>
             </div>
-            <h3>DevOps</h3>
-            <p>Docker, Kubernetes, CI/CD</p>
+            <h3>语言与工具</h3>
+            <p>TypeScript, Vite, Webpack</p>
+          </div>
+          <div class="tech-card">
+            <div class="tech-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+              </svg>
+            </div>
+            <h3>UI & 可视化</h3>
+            <p>SCSS, TailwindCSS, D3.js</p>
           </div>
         </div>
       </div>
@@ -300,19 +368,64 @@ const navigateToPost = (id) => {
 }
 
 .hero-avatar {
+  position: relative;
   width: 160px;
   height: 160px;
   margin: 0 auto 2rem;
   border-radius: 50%;
-  overflow: hidden;
-  border: 4px solid var(--color-primary);
-  box-shadow: var(--shadow-lg);
+  overflow: visible;
+  background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e9f0ff 100%);
+  animation: avatar-float 6s ease-in-out infinite;
+  transition: transform 0.25s ease-out;
+  will-change: transform;
 }
 
 .avatar-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.avatar-image.loaded {
+  opacity: 1;
+}
+
+.hero-avatar::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(
+    rgba(var(--color-primary-rgb), 0.6) 0%,
+    rgba(var(--color-primary-light-rgb), 0.4) 25%,
+    rgba(var(--color-accent-rgb), 0.6) 50%,
+    rgba(var(--color-primary-rgb), 0.6) 100%
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 4px),
+    #000 calc(100% - 4px)
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 4px),
+    #000 calc(100% - 4px)
+  );
+  z-index: -1;
+}
+
+@keyframes avatar-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 .hero-title {
@@ -432,7 +545,6 @@ const navigateToPost = (id) => {
   position: absolute;
   border-radius: 50%;
   filter: blur(var(--blur-lg));
-  animation: float 6s ease-in-out infinite;
 }
 
 .hero-shape-1 {
@@ -442,7 +554,6 @@ const navigateToPost = (id) => {
   opacity: 0.1;
   top: -100px;
   right: -100px;
-  animation-delay: 0s;
 }
 
 .hero-shape-2 {
@@ -452,7 +563,6 @@ const navigateToPost = (id) => {
   opacity: 0.1;
   bottom: -50px;
   left: -50px;
-  animation-delay: 2s;
 }
 
 .hero-shape-3 {
@@ -463,17 +573,6 @@ const navigateToPost = (id) => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  animation-delay: 4s;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
 }
 
 @keyframes titleFade {
@@ -769,5 +868,56 @@ const navigateToPost = (id) => {
   .tech-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.avatar-placeholder {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: linear-gradient(115deg, #f5f7ff 25%, #eef2ff 40%, #f5f7ff 65%);
+  background-size: 200% 100%;
+  animation: placeholder-shimmer 2.4s linear infinite;
+  filter: blur(0.2px);
+}
+
+@keyframes placeholder-shimmer {
+  0% {
+    background-position: 180% 0;
+  }
+  100% {
+    background-position: -180% 0;
+  }
+}
+
+.hero-avatar.loading::after {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(0, 136, 255, 0.4) 0%,
+    transparent 70%
+  );
+  filter: blur(12px);
+  opacity: 0.4;
+  animation: glow-pulse 4s ease-in-out infinite;
+  z-index: -3;
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    transform: scale(0.85);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.5;
+  }
+}
+
+.hero-avatar:hover {
+  /* animation-play-state: paused; */ /* 性能优化：移除此规则，让鼠标悬停和浮动动画更自然地结合 */
 }
 </style>

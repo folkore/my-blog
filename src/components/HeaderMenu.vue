@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, watch } from "vue";
 import { useTheme } from "../composables/useTheme";
 import LanguageSwitcher from "./LanguageSwitcher.vue";
 import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
 
 // 向父组件发送事件
 const emit = defineEmits(["open-search"]);
@@ -31,12 +32,22 @@ watch(locale, updateNavItems, { immediate: true });
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
-  document.body.classList.toggle("no-scroll", isMenuOpen.value);
 };
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 20;
 };
+
+// 监听路由变化，路由切换时自动关闭菜单并恢复滚动条
+const route = useRoute();
+watch(
+  () => route.fullPath,
+  () => {
+    if (isMenuOpen.value) {
+      isMenuOpen.value = false;
+    }
+  }
+);
 
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
@@ -45,7 +56,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
-  document.body.classList.remove("no-scroll");
   cleanup();
 });
 </script>
@@ -220,5 +230,4 @@ onUnmounted(() => {
   </header>
 </template>
 
-<!-- 不添加额外样式，复用全局样式 -->
 <style></style>

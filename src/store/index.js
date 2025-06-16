@@ -7,18 +7,18 @@ export const usePostsStore = defineStore('posts', {
     // 文章元数据列表
     posts: [
       {
-        id: 8,
-        title: '测试文章',
-        slug: 'debug-test',
-        cover: "https://picsum.photos/id/187/1200/600",
+        id: 9,
+        title: '早上喝美式咖啡真的能减肥吗？科学分析告诉你答案！☕️✨',
+        slug: 'healthy-weight-loss-americano-coffee-analysis',
+        cover: "https://picsum.photos/id/188/1200/600",
         author: {
-          name: "测试用户",
-          avatar: "https://picsum.photos/id/1012/200/200",
-          bio: "测试账号",
+          name: "健康生活达人",
+          avatar: "https://picsum.photos/id/1017/200/200",
+          bio: "健康减肥专家，咖啡爱好者",
         },
-        date: '2024-04-10',
-        tags: ['测试'],
-        excerpt: '这是一个用于测试 Markdown 加载的简单文章'
+        date: '2025-6-16',
+        tags: ['健康减肥', '美式咖啡', '科学减肥', '生活方式', '健康饮食'],
+        excerpt: '深度分析早上喝美式咖啡对减肥的影响，从科学角度解读咖啡因的代谢作用，分享实用的健康减肥小贴士和注意事项。'
       },
       {
         id: 7,

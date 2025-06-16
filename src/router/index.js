@@ -25,7 +25,7 @@ const routes = [
     component: () => import('../views/Blog.vue'),
     meta: { 
       title: '文章列表',
-      transition: 'slide'
+      transition: 'fade'
     }
   },
   {
@@ -43,7 +43,7 @@ const routes = [
     component: () => import('../views/Contact.vue'),
     meta: { 
       title: '联系我',
-      transition: 'slide'
+      transition: 'fade'
     }
   },
   {
