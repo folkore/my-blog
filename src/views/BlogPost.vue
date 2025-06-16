@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, nextTick } from "vue";
+import { ref, computed, onMounted, nextTick, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import ReadingProgress from "../components/ReadingProgress.vue";
 import ShareButtons from "../components/ShareButtons.vue";
@@ -73,6 +73,22 @@ onMounted(async () => {
   if (markdownRef.value) {
     headings.value = markdownRef.value.headings;
   }
+
+  // 如果首次加载时包含锚点，等待渲染后滚动
+  if (route.hash) {
+    nextTick(() => {
+      const idRaw = route.hash.slice(1);
+      let target = document.getElementById(idRaw);
+      if (!target) {
+        // 针对 markdown-it-anchor 编码后的 id 再次尝试
+        const encodedId = encodeURIComponent(idRaw);
+        target = document.getElementById(encodedId);
+      }
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth" });
+      }
+    });
+  }
 });
 
 // 检查内容是否为 Markdown 格式
@@ -117,6 +133,29 @@ const handleCommentAdded = (newComment) => {
     blogPost.value.comments.push(newComment);
   }
 };
+
+// 在内容加载完成后，如果 URL 中包含 hash，则滚动到对应元素
+watch(
+  () => route.hash,
+  (hash) => {
+    if (hash) {
+      // 等待下一个渲染周期，确保 Markdown 已插入 DOM
+      nextTick(() => {
+        const idRaw = route.hash.slice(1);
+        let target = document.getElementById(idRaw);
+        if (!target) {
+          // 针对 markdown-it-anchor 编码后的 id 再次尝试
+          const encodedId = encodeURIComponent(idRaw);
+          target = document.getElementById(encodedId);
+        }
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth" });
+        }
+      });
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>

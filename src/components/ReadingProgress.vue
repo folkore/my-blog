@@ -76,6 +76,30 @@ const handleMouseLeave = () => {
   showTooltip.value = false;
 };
 
+// 新增：点击进度条跳转阅读位置
+const handleClick = (event) => {
+  const track = event.currentTarget;
+  if (!track) return;
+
+  const rect = track.getBoundingClientRect();
+  // 计算点击位置所占比例（0-1）
+  let ratio = 0;
+  if (props.position === "left" || props.position === "right") {
+    ratio = (event.clientY - rect.top) / rect.height;
+  } else {
+    ratio = (event.clientX - rect.left) / rect.width;
+  }
+  ratio = Math.min(Math.max(ratio, 0), 1);
+
+  const targetElement = document.querySelector(props.target);
+  if (!targetElement) return;
+
+  const scrollHeight = targetElement.scrollHeight - window.innerHeight;
+  const targetScroll = scrollHeight * ratio;
+
+  window.scrollTo({ top: targetScroll, behavior: "smooth" });
+};
+
 onMounted(async () => {
   await nextTick();
   calculateProgress();
@@ -97,6 +121,7 @@ onUnmounted(() => {
   >
     <div
       class="progress-track"
+      @click="handleClick"
       :style="{
         height: position === 'left' || position === 'right' ? '100%' : height,
         width: position === 'left' || position === 'right' ? height : '100%',
@@ -142,6 +167,9 @@ onUnmounted(() => {
   overflow: hidden;
   border-radius: var(--radius-full, 9999px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  /* 允许点击 */
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .progress-bar {

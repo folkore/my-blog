@@ -20,7 +20,7 @@ const openSearch = () => {
 
 <template>
   <div class="app">
-    <ReadingProgress />
+    <!-- <ReadingProgress /> -->
     <HeaderMenu @open-search="openSearch" />
 
     <main class="main">

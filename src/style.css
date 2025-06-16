@@ -1,9 +1,9 @@
 :root {
   /* 主题颜色变量 */
-  --primary-color: #646cff;
-  --primary-hover: #535bf2;
-  --text-primary: #213547;
-  --text-secondary: #666;
+  --primary-color: #3385ff;
+  --primary-hover: #1e6bff;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
   --bg-primary: #ffffff;
   --bg-secondary: #f9f9f9;
   --border-color: #eaeaea;
@@ -52,6 +52,12 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* 其他辅助色 */
+  --color-primary: #3385ff;
+  --color-primary-rgb: 51, 133, 255;
+  --color-accent: #00d4ff;
+  --color-accent-rgb: 0, 212, 255;
 }
 
 /* 深色主题变量 */
