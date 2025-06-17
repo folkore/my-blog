@@ -24,7 +24,19 @@
 - **国际化**: Vue I18n
 - **Markdown渲染**: Markdown-it
 - **代码高亮**: Highlight.js
+- **数学公式渲染**: KaTeX
+- **目录 / 锚点插件**: markdown-it-anchor、markdown-it-table-of-contents
 - **CSS变量**: 主题切换和样式管理
+
+## 环境要求
+
+| 工具 | 版本建议 |
+|------|---------|
+| Node.js | ≥ 18 LTS |
+| npm | ≥ 9 |
+| pnpm（可选） | ≥ 8 |
+
+推荐通过 [nvm](https://github.com/coreybutler/nvm-windows) (or nvm-windows) 管理 Node 版本，避免全局冲突。
 
 ## 功能展示
 
@@ -101,6 +113,16 @@ npm run build
 npm run preview
 ```
 
+### 常用脚本
+
+```bash
+# 清理并重新安装依赖
+pnpm install --frozen-lockfile
+
+# 查看依赖关系图
+npx vite --force --debug
+```
+
 ## 项目结构
 
 ```
@@ -114,8 +136,11 @@ my-blog/
 │   │   ├── CommentSection.vue   # 评论区组件
 │   │   ├── GlobalSearch.vue     # 全局搜索组件
 │   │   ├── LanguageSwitcher.vue # 语言切换组件
+│   │   ├── Live2DPet.vue        # Live2D 看板娘组件
+│   │   ├── MarkdownRenderer.vue # Markdown 渲染器
 │   │   ├── PageTransition.vue   # 页面过渡组件
 │   │   ├── ReadingProgress.vue  # 阅读进度条组件
+│   │   ├── TableOfContents.vue  # 文章目录组件
 │   │   ├── SearchBar.vue        # 搜索栏组件
 │   │   ├── ShareButtons.vue     # 分享按钮组件
 │   │   └── TagFilter.vue        # 标签筛选组件
@@ -167,6 +192,8 @@ my-blog/
 ### 文章详情页
 
 - 阅读进度指示
+- 数学公式渲染（KaTeX）
+- 自动生成文章目录（TableOfContents 组件）
 - 文章分享功能
 - 评论系统
 - 相关文章推荐
@@ -194,3 +221,49 @@ my-blog/
 ## 许可证
 
 MIT License
+
+## 代码规范与自动化
+
+本项目采用 ESLint（含 vue 插件）+ Prettier 统一代码风格，Husky + lint-staged 实现提交前自动检查与格式化。
+
+### 常用命令
+
+```bash
+# 检查代码规范
+pnpm lint
+# 自动格式化
+pnpm format
+```
+
+### 提交前自动检查
+
+已集成 Husky 钩子，提交前会自动执行 lint-staged 检查与修复。
+
+### 持续集成建议
+
+推荐使用 GitHub Actions，流程如下：
+
+1. 安装依赖
+2. 执行 lint、format、build
+3. 产物自动部署到 GitHub Pages/Vercel/Netlify
+
+可参考如下 CI 配置片段：
+
+```yaml
+name: CI
+on:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm format
+      - run: pnpm build
+```
