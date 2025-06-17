@@ -1,46 +1,14 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { throttle } from "lodash-es";
+import { usePostsStore } from "../store";
 
-const router = useRouter();
 const { t } = useI18n();
 
-// 博客文章列表（示例数据）
-const latestPosts = ref([
-  {
-    id: 1,
-    title: "Vue 3 组合式 API 实践指南",
-    excerpt:
-      "探索 Vue 3 组合式 API 的最佳实践和使用技巧，提升代码的可维护性和复用性。",
-    image: "https://picsum.photos/id/1/800/400",
-    date: "2024-03-15",
-    tags: ["Vue.js", "JavaScript", "前端开发"],
-  },
-  {
-    id: 2,
-    title: "构建高性能的 Web 应用",
-    excerpt:
-      "学习如何优化 Web 应用的性能，包括代码分割、懒加载、缓存策略等技术。",
-    image: "https://picsum.photos/id/2/800/400",
-    date: "2024-03-10",
-    tags: ["性能优化", "Web开发", "前端开发"],
-  },
-  {
-    id: 3,
-    title: "现代 CSS 技术解析",
-    excerpt: "深入了解 CSS Grid、Flexbox、CSS 变量等现代 CSS 技术的应用。",
-    image: "https://picsum.photos/id/3/800/400",
-    date: "2024-03-05",
-    tags: ["CSS", "Web开发", "前端开发"],
-  },
-]);
-
-// 导航到博客文章
-const navigateToPost = (id) => {
-  router.push(`/blog/${id}`);
-};
+// 获取最新文章（取日期倒序前三篇）
+const postsStore = usePostsStore();
+const latestPosts = computed(() => postsStore.posts.slice(0, 3));
 
 const avatarUrl = ref("");
 const avatarLoaded = ref(false);
@@ -240,7 +208,7 @@ onUnmounted(() => {
         <div class="posts-grid">
           <article v-for="post in latestPosts" :key="post.id" class="post-card">
             <div class="post-image">
-              <img v-lazy="post.image" :alt="post.title" />
+              <img v-lazy="post.cover" :alt="post.title" />
             </div>
             <div class="post-content">
               <div class="post-tags">
@@ -256,7 +224,7 @@ onUnmounted(() => {
               <p class="post-excerpt">{{ post.excerpt }}</p>
               <div class="post-meta">
                 <span class="post-date">{{ post.date }}</span>
-                <router-link :to="`/blog/${post.id}`" class="post-link">
+                <router-link :to="`/blog/${post.slug}`" class="post-link">
                   {{ t("home.latestPosts.readMore") }}
                 </router-link>
               </div>
@@ -632,6 +600,8 @@ onUnmounted(() => {
 }
 
 .post-card {
+  display: flex;
+  flex-direction: column;
   background: var(--color-background);
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -662,6 +632,9 @@ onUnmounted(() => {
 }
 
 .post-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
   padding: 1.5rem;
 }
 
@@ -694,6 +667,7 @@ onUnmounted(() => {
 }
 
 .post-meta {
+  margin-top: auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -834,37 +808,36 @@ onUnmounted(() => {
 }
 
 /* Responsive Design */
+@media (max-width: 1024px) {
+  .posts-grid {
+    column-count: 2;
+  }
+}
+
 @media (max-width: 768px) {
   .hero {
     padding: 6rem 0;
   }
-
   .hero-title {
     font-size: 2.5rem;
   }
-
   .hero-description {
     font-size: 1.125rem;
   }
-
   .hero-avatar {
     width: 120px;
     height: 120px;
   }
-
   .hero-buttons {
     flex-direction: column;
   }
-
   .hero-button {
     width: 100%;
     justify-content: center;
   }
-
   .posts-grid {
     grid-template-columns: 1fr;
   }
-
   .tech-grid {
     grid-template-columns: 1fr;
   }

@@ -40,7 +40,7 @@ onMounted(async () => {
   }
 
   try {
-    const postSlug = route.params.id;
+    const postSlug = route.params.slug;
     const post = postsStore.getPostBySlug(postSlug);
 
     if (post) {
@@ -565,7 +565,9 @@ watch(
   box-shadow: var(--card-shadow);
   border: none;
   cursor: pointer;
-  transition: transform 0.3s ease, background-color 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    background-color 0.3s ease;
   padding: 0;
 }
 

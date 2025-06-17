@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch, onUnmounted } from "vue";
+import { ref, onMounted, computed, watch, onUnmounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import SearchBar from "../components/SearchBar.vue";
 import TagFilter from "../components/TagFilter.vue";
@@ -38,18 +38,50 @@ onMounted(() => {
   setTimeout(() => {
     isLoading.value = false;
   }, 500);
+
+  observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      loadMore();
+    }
+  });
+  nextTick(() => {
+    if (sentinel.value) observer.observe(sentinel.value);
+  });
 });
 
 onUnmounted(() => {
   // 移除语言变化事件监听
   window.removeEventListener("language-changed", handleLanguageChanged);
+  if (observer && sentinel.value) observer.unobserve(sentinel.value);
 });
 
 // 搜索和筛选
 const searchQuery = ref("");
 const selectedTags = ref([]);
-const currentPage = ref(1);
 const postsPerPage = 6;
+
+// 无限滚动：当前已显示的文章数量
+const postsShown = ref(postsPerPage);
+
+// 当搜索或标签筛选变化时重置计数
+watch([searchQuery, selectedTags], () => {
+  postsShown.value = postsPerPage;
+});
+
+// 计算需要展示的文章列表
+const displayedPosts = computed(() =>
+  filteredPosts.value.slice(0, postsShown.value)
+);
+
+// 交叉观察器加载更多
+const sentinel = ref(null);
+let observer = null;
+
+const loadMore = () => {
+  if (postsShown.value < filteredPosts.value.length) {
+    postsShown.value += postsPerPage;
+  }
+};
 
 // 获取所有标签
 const allTags = computed(() => {
@@ -85,34 +117,9 @@ const filteredPosts = computed(() => {
   return result;
 });
 
-// 分页相关
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredPosts.value.length / postsPerPage))
-);
-
-const paginatedPosts = computed(() => {
-  const start = (currentPage.value - 1) * postsPerPage;
-  const end = start + postsPerPage;
-  return filteredPosts.value.slice(start, end);
-});
-
 // 处理搜索
 const handleSearch = (query) => {
   searchQuery.value = query;
-  currentPage.value = 1; // 重置页码
-};
-
-// 分页方法
-const prevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--;
-  }
-};
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++;
-  }
 };
 </script>
 
@@ -163,7 +170,7 @@ const nextPage = () => {
         <!-- 文章列表 -->
         <div v-else class="posts-grid">
           <article
-            v-for="post in paginatedPosts"
+            v-for="post in displayedPosts"
             :key="post.id"
             class="post-card"
           >
@@ -186,7 +193,7 @@ const nextPage = () => {
                 <div class="meta-left">
                   <span class="post-date">{{ post.date }}</span>
                 </div>
-                <router-link :to="`/blog/${post.id}`" class="post-link">
+                <router-link :to="`/blog/${post.slug}`" class="post-link">
                   {{ t("blog.readMore") }}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -208,54 +215,8 @@ const nextPage = () => {
           </article>
         </div>
 
-        <!-- 分页 -->
-        <div v-if="filteredPosts.length > 0" class="pagination">
-          <button
-            class="pagination-button"
-            :disabled="currentPage === 1"
-            @click="prevPage"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            {{ t("pagination.prev") }}
-          </button>
-          <span class="page-info">
-            {{
-              t("pagination.info", { current: currentPage, total: totalPages })
-            }}
-          </span>
-          <button
-            class="pagination-button"
-            :disabled="currentPage === totalPages"
-            @click="nextPage"
-          >
-            {{ t("pagination.next") }}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
-        </div>
+        <!-- Sentinel 元素，用于触发加载更多 -->
+        <div ref="sentinel" style="height: 1px"></div>
       </div>
     </section>
   </div>
@@ -526,45 +487,6 @@ const nextPage = () => {
 
 .post-link:hover {
   gap: 0.5rem;
-}
-
-/* 分页 */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.pagination-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.pagination-button:hover:not(:disabled) {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  transform: translateY(-1px);
-}
-
-.pagination-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-info {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
 }
 
 /* 响应式设计 */

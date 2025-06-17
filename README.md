@@ -38,51 +38,6 @@
 
 推荐通过 [nvm](https://github.com/coreybutler/nvm-windows) (or nvm-windows) 管理 Node 版本，避免全局冲突。
 
-## 功能展示
-
-### 多主题模式
-
-支持亮色、暗色和跟随系统三种主题模式，通过CSS变量实现无缝切换，并持久化保存用户偏好。
-
-### 国际化支持
-
-完整支持中文和英文两种语言，可实时切换，无需刷新页面。语言设置会被保存在本地存储中。
-
-### 文章搜索与筛选
-
-- 实时搜索文章标题和内容
-- 按标签筛选文章
-- 分页浏览文章列表
-
-### 阅读体验优化
-
-- 文章阅读进度条
-- 返回顶部按钮
-- 代码块语法高亮
-- 响应式设计，适配各种设备
-
-### 社交互动
-
-- 文章评论系统
-- 分享到Twitter、Facebook、LinkedIn、微博和微信
-- 一键复制链接功能
-
-### 性能优化
-
-- 图片懒加载
-- 路由组件异步加载
-- 页面过渡动画
-- 主题切换平滑过渡
-
-### 全局搜索功能
-
-- 通过导航栏的搜索按钮或快捷键 `Ctrl+K` 随时激活
-- 支持实时搜索整站内容
-- 搜索结果高亮显示匹配内容
-- 支持键盘导航（上下箭头选择，Enter 确认）
-- 美观的全屏搜索界面，支持暗黑模式
-- 搜索结果缓存优化，提升性能
-
 ## 快速开始
 
 ### 安装依赖
@@ -123,48 +78,23 @@ pnpm install --frozen-lockfile
 npx vite --force --debug
 ```
 
-## 项目结构
+## 目录结构
 
 ```
 my-blog/
 ├── public/           # 静态资源
-│   └── placeholder.svg # 图片占位符
 ├── src/              # 源代码
 │   ├── assets/       # 样式和图片
 │   ├── components/   # 可复用组件
-│   │   ├── BackToTop.vue        # 返回顶部组件
-│   │   ├── CommentSection.vue   # 评论区组件
-│   │   ├── GlobalSearch.vue     # 全局搜索组件
-│   │   ├── LanguageSwitcher.vue # 语言切换组件
-│   │   ├── Live2DPet.vue        # Live2D 看板娘组件
-│   │   ├── MarkdownRenderer.vue # Markdown 渲染器
-│   │   ├── PageTransition.vue   # 页面过渡组件
-│   │   ├── ReadingProgress.vue  # 阅读进度条组件
-│   │   ├── TableOfContents.vue  # 文章目录组件
-│   │   ├── SearchBar.vue        # 搜索栏组件
-│   │   ├── ShareButtons.vue     # 分享按钮组件
-│   │   └── TagFilter.vue        # 标签筛选组件
 │   ├── composables/  # 组合式函数
-│   │   ├── useScrollToTop.js    # 返回顶部逻辑
-│   │   └── useTheme.js          # 主题切换逻辑
 │   ├── directives/   # 自定义指令
-│   │   └── lazyLoad.js          # 图片懒加载指令
 │   ├── i18n/         # 国际化
-│   │   ├── locales/             # 语言文件
-│   │   └── index.js             # 国际化配置
 │   ├── layouts/      # 布局组件
 │   ├── posts/        # 博客文章内容
 │   ├── router/       # 路由配置
 │   ├── store/        # 状态管理
 │   ├── utils/        # 工具函数
 │   ├── views/        # 页面组件
-│   │   ├── About.vue            # 关于页面
-│   │   ├── Blog.vue             # 博客列表页面
-│   │   ├── BlogPost.vue         # 博客文章页面
-│   │   ├── Contact.vue          # 联系页面
-│   │   ├── Home.vue             # 首页
-│   │   ├── LanguageTest.vue     # 语言测试页面
-│   │   └── NotFound.vue         # 404页面
 │   ├── App.vue       # 根组件
 │   ├── main.js       # 入口文件
 │   └── style.css     # 全局样式
@@ -175,52 +105,14 @@ my-blog/
 
 ## 主要功能
 
-### 首页
-
-- 现代化的Hero区域设计
-- 最新文章展示
-- 技术栈展示区域
-- 动画效果增强用户体验
-
-### 博客列表页
-
-- 文章搜索功能
-- 标签筛选系统
-- 分页浏览
-- 响应式卡片布局
-
-### 文章详情页
-
-- 阅读进度指示
-- 数学公式渲染（KaTeX）
-- 自动生成文章目录（TableOfContents 组件）
-- 文章分享功能
-- 评论系统
-- 相关文章推荐
-
-### 全局功能
-
-- 主题切换（亮色/暗色/系统跟随）
-- 语言切换（中文/英文）
-- 强大的全局搜索（支持快捷键 Ctrl+K 激活）
-- 返回顶部按钮
-- 页面过渡动画
-
-## 自定义配置
-
-参见 [Vite配置参考](https://vitejs.dev/config/)。
-
-## 贡献指南
-
-1. Fork 本仓库
-2. 创建你的特性分支 (`git checkout -b feature/amazing-feature`)
-3. 提交你的改动 (`git commit -m 'Add some amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 打开一个 Pull Request
-
-## 许可证
-
-MIT License
+- 多主题模式（亮色/暗色/系统跟随）
+- 国际化支持（中英文切换）
+- 全局搜索与文章筛选
+- 文章评论与社交分享
+- 响应式设计与动画过渡
+- 图片懒加载与性能优化
+- 代码高亮与数学公式渲染
+- 阅读进度、返回顶部、目录生成等阅读体验优化
 
 ## 代码规范与自动化
 
@@ -239,31 +131,14 @@ pnpm format
 
 已集成 Husky 钩子，提交前会自动执行 lint-staged 检查与修复。
 
-### 持续集成建议
+## 贡献指南
 
-推荐使用 GitHub Actions，流程如下：
+1. Fork 本仓库
+2. 创建你的特性分支 (`git checkout -b feature/amazing-feature`)
+3. 提交你的改动 (`git commit -m 'Add some amazing feature'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 打开一个 Pull Request
 
-1. 安装依赖
-2. 执行 lint、format、build
-3. 产物自动部署到 GitHub Pages/Vercel/Netlify
+## 许可证
 
-可参考如下 CI 配置片段：
-
-```yaml
-name: CI
-on:
-  push:
-    branches: [main]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm format
-      - run: pnpm build
-```
+MIT License
