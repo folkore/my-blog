@@ -4,9 +4,11 @@ import { useI18n } from "vue-i18n";
 import SearchBar from "../components/SearchBar.vue";
 import TagFilter from "../components/TagFilter.vue";
 import { usePostsStore } from "../store";
+import { useSearch } from "../composables/useSearch";
 
 const { t, locale } = useI18n();
 const postsStore = usePostsStore();
+const { searchQuery, searchResults, performSearch } = useSearch(true);
 
 // 监听语言变化事件
 const handleLanguageChanged = () => {
@@ -56,11 +58,8 @@ onUnmounted(() => {
 });
 
 // 搜索和筛选
-const searchQuery = ref("");
 const selectedTags = ref([]);
 const postsPerPage = 6;
-
-// 无限滚动：当前已显示的文章数量
 const postsShown = ref(postsPerPage);
 
 // 当搜索或标签筛选变化时重置计数
@@ -68,9 +67,14 @@ watch([searchQuery, selectedTags], () => {
   postsShown.value = postsPerPage;
 });
 
+// 监听搜索框输入，执行搜索
+watch(searchQuery, (newQuery) => {
+  performSearch();
+});
+
 // 计算需要展示的文章列表
 const displayedPosts = computed(() =>
-  filteredPosts.value.slice(0, postsShown.value)
+  finalFilteredPosts.value.slice(0, postsShown.value)
 );
 
 // 交叉观察器加载更多
@@ -78,7 +82,7 @@ const sentinel = ref(null);
 let observer = null;
 
 const loadMore = () => {
-  if (postsShown.value < filteredPosts.value.length) {
+  if (postsShown.value < finalFilteredPosts.value.length) {
     postsShown.value += postsPerPage;
   }
 };
@@ -93,34 +97,54 @@ const allTags = computed(() => {
 });
 
 // 根据搜索和标签筛选文章
-const filteredPosts = computed(() => {
-  let result = blogPosts.value;
-
-  // 搜索筛选
+const finalFilteredPosts = computed(() => {
+  // 如果有搜索输入，则以包含高亮信息的搜索结果为基础
   if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    result = result.filter(
-      (post) =>
-        post.title.toLowerCase().includes(query) ||
-        post.excerpt.toLowerCase().includes(query) ||
-        post.tags.some((tag) => tag.toLowerCase().includes(query))
-    );
+    let results = searchResults.value;
+
+    // 如果同时选择了标签，则在搜索结果上再次筛选
+    if (selectedTags.value.length > 0) {
+      results = results.filter((post) =>
+        post.tags.some((tag) => selectedTags.value.includes(tag))
+      );
+    }
+    return results;
   }
 
-  // 标签筛选
+  // 如果没有搜索，仅按标签筛选
   if (selectedTags.value.length > 0) {
-    result = result.filter((post) =>
+    return blogPosts.value.filter((post) =>
       post.tags.some((tag) => selectedTags.value.includes(tag))
     );
   }
 
-  return result;
+  // 如果没有搜索也没有标签筛选，返回所有文章
+  return blogPosts.value;
 });
 
 // 处理搜索
 const handleSearch = (query) => {
   searchQuery.value = query;
 };
+
+// 标签筛选面板状态
+const isFilterPanelOpen = ref(false);
+
+// 打开 / 关闭面板
+const toggleFilterPanel = () => {
+  isFilterPanelOpen.value = !isFilterPanelOpen.value;
+};
+const closeFilterPanel = () => {
+  isFilterPanelOpen.value = false;
+};
+
+// 选择标签后自动关闭面板（可根据需要保留注释）
+watch(selectedTags, (val, oldVal) => {
+  // 当选择发生变化且面板打开时自动关闭以节省空间
+  if (isFilterPanelOpen.value) {
+    closeFilterPanel();
+  }
+});
 </script>
 
 <template>
@@ -144,11 +168,35 @@ const handleSearch = (query) => {
           <!-- 搜索框组件 -->
           <SearchBar
             :placeholder="t('search.placeholder')"
-            @search="handleSearch"
+            v-model:searchQuery="searchQuery"
           />
 
-          <!-- 标签筛选组件 -->
-          <TagFilter :tags="allTags" v-model:selectedTags="selectedTags" />
+          <!-- 标签筛选按钮 -->
+          <button class="filter-button" @click="toggleFilterPanel">
+            {{ t("filter.tags.title") }}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M3 4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1l-7 9v6l-4 3v-9L3 4z"
+              />
+            </svg>
+          </button>
+
+          <!-- 标签筛选组件（可折叠） -->
+          <!-- <TagFilter
+            v-if="isFilterPanelOpen"
+            :tags="allTags"
+            v-model:selectedTags="selectedTags"
+          /> -->
         </div>
       </div>
     </section>
@@ -163,7 +211,7 @@ const handleSearch = (query) => {
         </div>
 
         <!-- 无结果提示 -->
-        <div v-else-if="filteredPosts.length === 0" class="no-results">
+        <div v-else-if="finalFilteredPosts.length === 0" class="no-results">
           <p>{{ t("blog.noResults") }}</p>
         </div>
 
@@ -187,8 +235,11 @@ const handleSearch = (query) => {
                   {{ tag }}
                 </span>
               </div>
-              <h2 class="post-title">{{ post.title }}</h2>
-              <p class="post-excerpt">{{ post.excerpt }}</p>
+              <h2
+                class="post-title"
+                v-html="post.highlightedTitle || post.title"
+              ></h2>
+              <p class="post-excerpt" v-html="post.preview || post.excerpt"></p>
               <div class="post-meta">
                 <div class="meta-left">
                   <span class="post-date">{{ post.date }}</span>
@@ -219,6 +270,35 @@ const handleSearch = (query) => {
         <div ref="sentinel" style="height: 1px"></div>
       </div>
     </section>
+
+    <!-- 筛选面板 Drawer -->
+    <transition name="overlay-fade">
+      <div
+        v-if="isFilterPanelOpen"
+        class="filter-overlay"
+        @click.self="closeFilterPanel"
+      >
+        <!-- 抽屉面板过渡 -->
+        <transition name="drawer">
+          <div class="filter-panel" v-show="isFilterPanelOpen">
+            <div class="filter-panel-header">
+              <h3>{{ t("filter.tags.title") }}</h3>
+              <button class="close-panel" @click="closeFilterPanel">
+                &times;
+              </button>
+            </div>
+            <TagFilter :tags="allTags" v-model:selectedTags="selectedTags" />
+
+            <!-- 移动端底部关闭按钮 -->
+            <div class="panel-footer-mobile">
+              <button class="btn-close-mobile" @click="closeFilterPanel">
+                {{ t("search.close") }}
+              </button>
+            </div>
+          </div>
+        </transition>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -598,6 +678,162 @@ const handleSearch = (query) => {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.filter-button {
+  white-space: nowrap;
+  min-width: 110px;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(
+    135deg,
+    var(--primary-color) 0%,
+    var(--primary-hover) 100%
+  );
+  color: #fff;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.25);
+  transition:
+    transform 0.2s var(--bezier-smooth),
+    box-shadow 0.2s;
+}
+.filter-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(var(--color-primary-rgb), 0.35);
+}
+.dark-theme .filter-button {
+  background: linear-gradient(
+    135deg,
+    var(--primary-hover) 0%,
+    var(--primary-color) 100%
+  );
+}
+
+.filter-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 4rem 1rem;
+  z-index: 1000;
+}
+
+.filter-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 360px;
+  background: var(--bg-primary);
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.filter-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.close-panel {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.close-panel:hover {
+  color: var(--primary-color);
+}
+
+.overlay-fade-enter-active,
+.overlay-fade-leave-active {
+  transition: opacity 0.3s;
+}
+.overlay-fade-enter-from,
+.overlay-fade-leave-to {
+  opacity: 0;
+}
+
+/* Drawer 过渡（桌面：右侧滑入；移动端：底部滑入） */
+.drawer-enter-active,
+.drawer-leave-active {
+  transition: transform 0.35s ease;
+}
+.drawer-enter-from,
+.drawer-leave-to {
+  transform: translateX(100%);
+}
+
+/* 移动端覆盖，抽屉自底部滑入 */
+@media (max-width: 768px) {
+  .drawer-enter-from,
+  .drawer-leave-to {
+    transform: translateY(100%);
+  }
+  .filter-panel {
+    width: 100%;
+    max-width: none;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    bottom: 0;
+    left: 0;
+  }
+}
+
+@media (min-width: 600px) {
+  .filters {
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+  }
+  .filters .search-container {
+    flex: 1 1 auto;
+    margin-bottom: 0; /* 移除竖向布局下的下边距 */
+  }
+  .filter-button {
+    margin-left: auto;
+  }
+}
+
+.btn-close-mobile {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--primary-color);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.btn-close-mobile:hover {
+  background: var(--primary-hover);
+}
+
+/* 仅移动端显示底部按钮 */
+.panel-footer-mobile {
+  display: none;
+}
+@media (max-width: 768px) {
+  .panel-footer-mobile {
+    display: block;
+    padding: 1rem 1.5rem 1.5rem;
+    border-top: 1px solid var(--border-color);
   }
 }
 </style>

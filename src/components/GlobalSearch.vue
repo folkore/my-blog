@@ -1,7 +1,8 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted, computed, nextTick } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { useSearch } from "../composables/useSearch";
 
 const props = defineProps({
   posts: {
@@ -16,34 +17,31 @@ const props = defineProps({
 
 const { t, locale } = useI18n();
 const router = useRouter();
+const route = useRoute();
 
 const isOpen = ref(false);
-const searchQuery = ref("");
-const activeIndex = ref(-1);
 const searchInput = ref(null);
+const activeIndex = ref(-1);
+
+// 使用搜索 composable
+const {
+  searchQuery,
+  searchResults,
+  isSearching,
+  isSearchComplete,
+  performSearch,
+  clearSearch,
+} = useSearch();
 
 const placeholderText = computed(() => t("search.placeholder"));
 
-const searchResults = computed(() => {
-  if (!searchQuery.value.trim()) return [];
-  const query = searchQuery.value.toLowerCase();
-  return props.posts
-    .filter(
-      (post) =>
-        post.title.toLowerCase().includes(query) ||
-        (post.content && post.content.toLowerCase().includes(query))
-    )
-    .slice(0, 5);
-});
-
-const highlightParts = (text, query) => {
-  if (!query) return [{ text, isHighlight: false }];
-  const parts = text.split(new RegExp(`(${query})`, "gi"));
-  return parts.map((part) => ({
-    text: part,
-    isHighlight: part.toLowerCase() === query.toLowerCase(),
+// 搜索结果处理为高亮格式
+const highlightedResults = computed(() => {
+  return searchResults.value.map((result, index) => ({
+    ...result,
+    formattedDate: formatDate(result.date),
   }));
-};
+});
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "";
@@ -54,20 +52,6 @@ const formatDate = (dateStr) => {
     day: "numeric",
   });
 };
-
-const highlightedResults = computed(() => {
-  return searchResults.value.map((result) => ({
-    ...result,
-    titleParts: highlightParts(result.title, searchQuery.value),
-    excerptParts: result.content
-      ? highlightParts(
-          result.content.substring(0, 150) + "...",
-          searchQuery.value
-        )
-      : [],
-    formattedDate: formatDate(result.date),
-  }));
-});
 
 const openSearch = () => {
   isOpen.value = true;
@@ -80,6 +64,7 @@ const closeSearch = () => {
   isOpen.value = false;
   searchQuery.value = "";
   activeIndex.value = -1;
+  clearSearch();
 };
 
 watch(isOpen, (val) => {
@@ -88,6 +73,15 @@ watch(isOpen, (val) => {
     nextTick(() => searchInput.value?.focus());
   } else {
     document.body.style.overflow = "";
+  }
+});
+
+watch(searchQuery, () => {
+  activeIndex.value = -1;
+  if (searchQuery.value && searchQuery.value.length >= 1) {
+    performSearch();
+  } else {
+    clearSearch();
   }
 });
 
@@ -127,11 +121,12 @@ const scrollActiveIntoView = () => {
       });
     }
   });
+  closeSearch();
 };
 
 const handleResultClick = (result) => {
-  router.push(`/blog/${result.id}`);
-  closeSearch();
+  router.push(`/blog/${result.slug}`);
+  isOpen.value = false;
 };
 
 const handleGlobalKeydown = (e) => {
@@ -145,12 +140,19 @@ onMounted(() => {
   window.addEventListener("keydown", handleGlobalKeydown);
 });
 
+// 侦听 URL 查询参数的变化，以便在需要时自动打开搜索
+watch(
+  () => route.query.q,
+  (newQuery) => {
+    if (newQuery && !isOpen.value) {
+      openSearch();
+    }
+  },
+  { immediate: true }
+);
+
 onUnmounted(() => {
   window.removeEventListener("keydown", handleGlobalKeydown);
-});
-
-watch(searchQuery, () => {
-  activeIndex.value = -1;
 });
 
 defineExpose({
@@ -236,6 +238,9 @@ defineExpose({
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
               </button>
+              <span v-if="isSearching" class="search-status-indicator">
+                <span class="search-spinner"></span>
+              </span>
             </div>
             <button
               @click="closeSearch"
@@ -250,7 +255,7 @@ defineExpose({
             <div v-if="searchResults.length > 0" class="search-results">
               <div
                 v-for="(result, index) in highlightedResults"
-                :key="result.id"
+                :key="result.id || index"
                 class="search-result-item"
                 :class="{ active: index === activeIndex }"
                 @click="handleResultClick(result)"
@@ -285,17 +290,10 @@ defineExpose({
                   </svg>
                 </div>
                 <div class="result-content">
-                  <div class="result-title">
-                    <template
-                      v-for="(part, index) in result.titleParts"
-                      :key="index"
-                    >
-                      <span v-if="part.isHighlight" class="highlight">{{
-                        part.text
-                      }}</span>
-                      <template v-else>{{ part.text }}</template>
-                    </template>
-                  </div>
+                  <div
+                    class="result-title"
+                    v-html="result.highlightedTitle"
+                  ></div>
                   <div
                     class="result-meta"
                     v-if="result.formattedDate || result.tags?.length"
@@ -316,25 +314,25 @@ defineExpose({
                       {{ tag }}
                     </span>
                   </div>
-                  <div v-if="result.content" class="result-excerpt">
-                    <template
-                      v-for="(part, index) in result.excerptParts"
-                      :key="index"
-                    >
-                      <span v-if="part.isHighlight" class="highlight">{{
-                        part.text
-                      }}</span>
-                      <template v-else>{{ part.text }}</template>
-                    </template>
-                  </div>
+                  <div
+                    v-if="result.preview"
+                    class="result-excerpt"
+                    v-html="result.preview"
+                  ></div>
                 </div>
               </div>
             </div>
             <div
-              v-else-if="searchQuery && !searchResults.length"
+              v-else-if="
+                searchQuery && isSearchComplete && !searchResults.length
+              "
               class="no-results"
             >
               <p>{{ t("search.empty") }}: "{{ searchQuery }}"</p>
+            </div>
+            <div v-else-if="isSearching" class="search-loading">
+              <div class="search-spinner large"></div>
+              <p>{{ t("search.searching") }}</p>
             </div>
             <div v-else class="search-tips">
               <p>{{ t("search.tip") }}</p>
@@ -542,12 +540,49 @@ defineExpose({
   color: var(--color-text);
 }
 
+/* 搜索状态指示器 */
+.search-status-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.search-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(var(--color-primary-rgb), 0.2);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.search-spinner.large {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* 搜索结果 */
 .search-content {
   flex: 1;
   overflow-y: auto;
   padding: 1rem 1.5rem;
   position: relative;
+}
+
+.search-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 0;
+  color: var(--color-secondary-text);
+  gap: 1rem;
 }
 
 .search-results {
@@ -650,6 +685,8 @@ defineExpose({
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .no-results,
@@ -763,8 +800,10 @@ defineExpose({
   }
 }
 </style>
+
 <style>
 /* 高亮样式 */
+.global-search mark,
 .highlight {
   background-color: var(--color-primary);
   color: white;
@@ -772,5 +811,12 @@ defineExpose({
   border-radius: var(--radius-sm);
   font-style: normal;
   display: inline;
+}
+
+.result-title mark {
+  color: white !important;
+  background-color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  padding: 0 2px;
 }
 </style>

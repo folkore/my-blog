@@ -28,7 +28,18 @@
         "close": "Close search"
       },
       "clear": "Clear search",
-      "close": "Close search"
+      "close": "Close search",
+      "found": "{count} results found for \"{query}\"",
+      "searching": "Searching...",
+      "noResults": "No results found for \"{query}\"",
+      "settings": {
+        "title": "Search Settings",
+        "includeContent": "Search in full content",
+        "threshold": "Match strictness",
+        "highlightMatches": "Highlight matches"
+      },
+      "fulltext": "Full-text search available",
+      "searchInContent": "Searching in article content..."
     },
     "blog": {
       "title": "Blog Posts",
@@ -79,7 +90,9 @@
     "filter": {
       "tags": {
         "title": "Filter by Tags",
-        "clearAll": "Clear All"
+        "clearAll": "Clear All",
+        "expand": "Show Tags",
+        "collapse": "Hide Tags"
       }
     },
     "pagination": {

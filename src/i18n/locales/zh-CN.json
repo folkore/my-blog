@@ -28,7 +28,18 @@
       "close": "关闭搜索"
     },
     "clear": "清除搜索",
-    "close": "关闭搜索"
+    "close": "关闭搜索",
+    "found": "找到 {count} 条与 \"{query}\" 相关的结果",
+    "searching": "搜索中...",
+    "noResults": "未找到与 \"{query}\" 相关的内容",
+    "settings": {
+      "title": "搜索设置",
+      "includeContent": "搜索全文内容",
+      "threshold": "匹配严格程度",
+      "highlightMatches": "高亮匹配内容"
+    },
+    "fulltext": "已启用全文搜索",
+    "searchInContent": "正在搜索文章内容..."
   },
   "blog": {
     "title": "博客文章",
@@ -79,7 +90,9 @@
   "filter": {
     "tags": {
       "title": "标签筛选",
-      "clearAll": "清除所有"
+      "clearAll": "清除所有",
+      "expand": "展开标签",
+      "collapse": "收起标签"
     }
   },
   "pagination": {

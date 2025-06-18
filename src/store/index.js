@@ -10,6 +10,12 @@ export const usePostsStore = defineStore('posts', {
     
     // 缓存文章内容
     postContents: {},
+    
+    // 搜索相关状态
+    searchStatus: {
+      contentsLoaded: false,
+      isInitialized: false
+    }
   }),
 
   getters: {
@@ -46,15 +52,10 @@ export const usePostsStore = defineStore('posts', {
       return state.posts.filter(post => post.tags.includes(tag));
     },
 
-    // 搜索文章
-    searchPosts: (state) => (query) => {
-      const searchTerm = query.toLowerCase();
-      return state.posts.filter(post => {
-        return (
-          post.title.toLowerCase().includes(searchTerm) ||
-          post.excerpt.toLowerCase().includes(searchTerm)
-        );
-      });
+    // 获取文章关键词
+    getPostKeywords: (state) => (slug) => {
+      const post = state.posts.find(post => post.slug === slug);
+      return post?.keywords || [];
     }
   },
 
@@ -80,6 +81,28 @@ export const usePostsStore = defineStore('posts', {
       } catch (error) {
         console.error('Failed to load post content:', error);
         return null;
+      }
+    },
+    
+    // 预加载所有文章内容（用于搜索）
+    async preloadAllContents() {
+      if (this.searchStatus.contentsLoaded) return true;
+      
+      try {
+        // 并行加载所有文章内容
+        const loadPromises = this.posts.map(post => 
+          this.getPostContent(post.slug).catch(err => {
+            console.warn(`Failed to preload content for ${post.slug}:`, err);
+            return null;
+          })
+        );
+        
+        await Promise.all(loadPromises);
+        this.searchStatus.contentsLoaded = true;
+        return true;
+      } catch (error) {
+        console.error('Failed to preload all contents:', error);
+        return false;
       }
     },
     
@@ -109,6 +132,11 @@ export const usePostsStore = defineStore('posts', {
       if (index !== -1) {
         this.posts.splice(index, 1);
       }
+    },
+    
+    // 设置搜索初始化状态
+    setSearchInitialized(value = true) {
+      this.searchStatus.isInitialized = value;
     }
   }
 }); 

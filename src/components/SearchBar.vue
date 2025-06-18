@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 
 const props = defineProps({
@@ -7,23 +7,22 @@ const props = defineProps({
     type: String,
     default: "搜索文章...",
   },
+  searchQuery: {
+    type: String,
+    default: "",
+  },
 });
 
-const emit = defineEmits(["search"]);
-const searchQuery = ref("");
+const emit = defineEmits(["update:searchQuery"]);
 const { t } = useI18n();
 
-const handleSearch = () => {
-  emit("search", searchQuery.value);
-};
+const localQuery = computed({
+  get: () => props.searchQuery,
+  set: (val) => emit("update:searchQuery", val),
+});
 
 const clearSearch = () => {
-  searchQuery.value = "";
-  emit("search", "");
-};
-
-const handleInput = () => {
-  emit("search", searchQuery.value);
+  emit("update:searchQuery", "");
 };
 </script>
 
@@ -31,14 +30,13 @@ const handleInput = () => {
   <div class="search-container">
     <div class="search-bar">
       <input
-        v-model="searchQuery"
+        v-model="localQuery"
         type="text"
         :placeholder="t('search.placeholder')"
-        @input="handleInput"
         class="search-input"
       />
       <button
-        v-if="searchQuery"
+        v-if="localQuery"
         class="clear-button"
         @click="clearSearch"
         :aria-label="t('search.clear')"
@@ -58,11 +56,7 @@ const handleInput = () => {
           <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
       </button>
-      <button
-        class="search-button"
-        @click="handleSearch"
-        :aria-label="t('search.label')"
-      >
+      <div class="search-button-static" :aria-label="t('search.label')">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -77,7 +71,7 @@ const handleInput = () => {
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-      </button>
+      </div>
     </div>
   </div>
 </template>
@@ -116,7 +110,7 @@ const handleInput = () => {
   box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.2);
 }
 
-.search-button,
+.search-button-static,
 .clear-button {
   position: absolute;
   background: none;
@@ -130,13 +124,13 @@ const handleInput = () => {
   transition: color 0.3s ease;
 }
 
-.search-button:hover,
 .clear-button:hover {
   color: var(--primary-color);
 }
 
-.search-button {
+.search-button-static {
   right: 0;
+  pointer-events: none; /* 放大镜图标不响应点击 */
 }
 
 .clear-button {
