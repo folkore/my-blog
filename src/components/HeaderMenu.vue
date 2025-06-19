@@ -23,6 +23,7 @@ const updateNavItems = () => {
   navItems.value = [
     { name: t("nav.home"), path: "/" },
     { name: t("nav.blog"), path: "/blog" },
+    { name: t("nav.bookmarks"), path: "/bookmarks" },
     { name: t("nav.about"), path: "/about" },
     { name: t("nav.contact"), path: "/contact" },
   ];

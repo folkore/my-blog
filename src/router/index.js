@@ -32,8 +32,17 @@ const routes = [
     path: '/blog/:slug',
     name: 'BlogPost',
     component: () => import('../views/BlogPost.vue'),
-    meta: { 
+    meta: {
       title: '文章详情',
+      transition: 'fade'
+    }
+  },
+  {
+    path: '/bookmarks',
+    name: 'Bookmarks',
+    component: () => import('../views/Bookmarks.vue'),
+    meta: {
+      title: '我的书签',
       transition: 'fade'
     }
   },
@@ -41,7 +50,7 @@ const routes = [
     path: '/contact',
     name: 'Contact',
     component: () => import('../views/Contact.vue'),
-    meta: { 
+    meta: {
       title: '联系我',
       transition: 'fade'
     }

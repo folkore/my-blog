@@ -1,7 +1,10 @@
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import ReadingProgress from "../components/ReadingProgress.vue";
+import ReadingProgressNotification from "../components/ReadingProgressNotification.vue";
+import FontSettingsPanel from "../components/FontSettingsPanel.vue";
+import BookmarkButton from "../components/BookmarkButton.vue";
 import ShareButtons from "../components/ShareButtons.vue";
 import CommentSection from "../components/CommentSection.vue";
 import MarkdownRenderer from "../components/MarkdownRenderer.vue";
@@ -9,12 +12,23 @@ import TableOfContents from "../components/TableOfContents.vue";
 import { useI18n } from "vue-i18n";
 import { usePostsStore } from "../store";
 import { parseMarkdown } from "../utils/markdown-loader";
+import { useReadingPreferences } from "../composables/useReadingPreferences";
 
 let route, router, t, locale, postsStore;
 let blogPost = ref(null);
 let isLoading = ref(true);
 let error = ref(null);
 let postContent = ref(null);
+
+// 阅读偏好设置
+const { updateReadingProgress, getReadingProgress, initializePreferences } =
+  useReadingPreferences();
+
+// 阅读进度相关状态
+const showProgressNotification = ref(false);
+const savedProgress = ref(null);
+let scrollHandler = null;
+let progressUpdateTimer = null;
 
 try {
   route = useRoute();
@@ -32,7 +46,87 @@ const articleRef = ref(null);
 const markdownRef = ref(null);
 const headings = ref([]);
 
+// 防抖函数
+const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
+
+// 计算当前阅读进度
+const calculateCurrentProgress = () => {
+  const targetElement = document.querySelector(".blog-post-content");
+  if (!targetElement) return { progress: 0, scrollPosition: 0 };
+
+  const scrollTop = window.scrollY;
+  const scrollHeight = targetElement.scrollHeight - window.innerHeight;
+  const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+
+  return {
+    progress: Math.min(100, Math.max(0, progress)),
+    scrollPosition: scrollTop,
+  };
+};
+
+// 保存阅读进度（防抖处理）
+const saveProgress = debounce(() => {
+  if (!blogPost.value) return;
+
+  const { progress, scrollPosition } = calculateCurrentProgress();
+
+  // 只有进度大于 5% 且小于 95% 时才保存（避免保存开头和结尾）
+  if (progress > 5 && progress < 95) {
+    updateReadingProgress(
+      blogPost.value.slug,
+      progress,
+      scrollPosition,
+      blogPost.value.title
+    );
+  }
+}, 1000);
+
+// 滚动事件处理
+const handleScroll = () => {
+  saveProgress();
+};
+
+// 恢复阅读位置
+const restoreReadingPosition = () => {
+  if (!savedProgress.value) return;
+
+  const targetScroll = savedProgress.value.scrollPosition;
+  window.scrollTo({ top: targetScroll, behavior: "smooth" });
+
+  // 隐藏提示
+  showProgressNotification.value = false;
+};
+
+// 关闭进度提示
+const closeProgressNotification = () => {
+  showProgressNotification.value = false;
+};
+
+// 检查是否有保存的阅读进度
+const checkSavedProgress = () => {
+  if (!blogPost.value) return;
+
+  const progress = getReadingProgress(blogPost.value.slug);
+  if (progress && progress.progress > 5) {
+    savedProgress.value = progress;
+    showProgressNotification.value = true;
+  }
+};
+
 onMounted(async () => {
+  // 初始化阅读偏好设置
+  await initializePreferences();
+
   if (!postsStore) {
     isLoading.value = false;
     if (!error.value) error.value = "Store not available.";
@@ -74,6 +168,12 @@ onMounted(async () => {
     headings.value = markdownRef.value.headings;
   }
 
+  // 检查是否有保存的阅读进度
+  checkSavedProgress();
+
+  // 添加滚动事件监听器
+  window.addEventListener("scroll", handleScroll, { passive: true });
+
   // 如果首次加载时包含锚点，等待渲染后滚动
   if (route.hash) {
     nextTick(() => {
@@ -88,6 +188,16 @@ onMounted(async () => {
         target.scrollIntoView({ behavior: "smooth" });
       }
     });
+  }
+});
+
+// 清理事件监听器
+onUnmounted(() => {
+  if (scrollHandler) {
+    window.removeEventListener("scroll", handleScroll);
+  }
+  if (progressUpdateTimer) {
+    clearTimeout(progressUpdateTimer);
   }
 });
 
@@ -163,6 +273,18 @@ watch(
     <!-- 文章专用阅读进度条 -->
     <ReadingProgress v-if="blogPost" target=".blog-post-content" />
 
+    <!-- 继续阅读提示 -->
+    <ReadingProgressNotification
+      v-if="showProgressNotification && savedProgress"
+      :progress="savedProgress.progress"
+      :title="savedProgress.title"
+      @continue-reading="restoreReadingPosition"
+      @close="closeProgressNotification"
+    />
+
+    <!-- 字体设置面板 -->
+    <FontSettingsPanel v-if="blogPost && !isLoading && !error" />
+
     <!-- 固定返回按钮 -->
     <button
       class="floating-back-button"
@@ -216,7 +338,22 @@ watch(
               calculateReadTime(postContent)
             }}</span>
           </div>
-          <h1 class="post-title">{{ blogPost.title }}</h1>
+          <div class="post-title-section">
+            <h1 class="post-title">{{ blogPost.title }}</h1>
+            <BookmarkButton
+              :article-slug="blogPost.slug"
+              :article-data="{
+                title: blogPost.title,
+                date: blogPost.date,
+                tags: blogPost.tags,
+                excerpt: blogPost.excerpt,
+                category: blogPost.tags[0],
+              }"
+              size="large"
+              variant="floating"
+              show-label
+            />
+          </div>
           <div class="post-meta-author">
             <img
               :src="blogPost.author.avatar"
@@ -313,6 +450,50 @@ watch(
   position: relative;
   width: 100%;
   margin: 0 auto;
+
+  /* 应用个性化阅读设置 */
+  font-size: var(--reading-font-size, 16px) !important;
+  line-height: var(--reading-line-height, 1.6) !important;
+  font-family: var(--reading-font-family, var(--font-sans)) !important;
+
+  /* 亮度控制 */
+  opacity: var(--reading-brightness, 1) !important;
+  transition:
+    opacity 0.3s ease,
+    font-size 0.3s ease,
+    line-height 0.3s ease;
+}
+
+/* 确保文章内容的所有子元素都继承字体设置 */
+.blog-post-content * {
+  font-size: inherit !important;
+  line-height: inherit !important;
+  font-family: inherit !important;
+}
+
+/* 保持标题的相对大小 */
+.blog-post-content h1 {
+  font-size: 2em !important;
+}
+
+.blog-post-content h2 {
+  font-size: 1.5em !important;
+}
+
+.blog-post-content h3 {
+  font-size: 1.25em !important;
+}
+
+.blog-post-content h4 {
+  font-size: 1.125em !important;
+}
+
+.blog-post-content h5 {
+  font-size: 1em !important;
+}
+
+.blog-post-content h6 {
+  font-size: 0.875em !important;
 }
 
 /* 响应式覆盖 */
@@ -436,12 +617,24 @@ watch(
   color: var(--color-secondary-text);
 }
 
+.post-title-section {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
 .post-title {
+  flex: 1;
   font-size: 42px;
   font-weight: 700;
-  margin-bottom: 24px;
   line-height: 1.2;
   color: var(--color-text);
+  margin: 0;
+  text-align: center;
+  min-width: 0; /* 允许文本收缩 */
 }
 
 .post-meta-author {
@@ -521,6 +714,12 @@ watch(
     padding: 0 16px;
   }
 
+  .post-title-section {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
   .post-title {
     font-size: 32px;
   }
@@ -551,11 +750,11 @@ watch(
 /* 固定返回按钮样式 */
 .floating-back-button {
   position: fixed;
-  bottom: 90px;
+  bottom: 100px;
   right: 30px;
   z-index: 99;
-  width: 50px;
-  height: 50px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: var(--card-bg);
   color: var(--text-primary);
