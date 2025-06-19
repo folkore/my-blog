@@ -19,6 +19,56 @@
   "blog": {
     "title": "Blog Posts",
     "search": "Search articles...",
-    "noResults": "No articles found"
+    "noResults": "No articles found",
+    "commentCount": "{count} Comments",
+    "noComments": "No comments yet. Be the first to comment!",
+    "postComment": "Post a Comment",
+    "commentContent": "Comment",
+    "commentPlaceholder": "Share your thoughts...",
+    "submitComment": "Submit Comment",
+    "commentSuccess": "Comment submitted successfully!"
+  },
+  "comments": {
+    "poweredByGitHub": "Powered by GitHub Issues",
+    "viewOnGitHub": "View on GitHub",
+    "loadingComments": "Loading comments",
+    "githubLoginPrompt": "Login with GitHub to post comments",
+    "githubCommentPlaceholder": "Write your comment... (Markdown supported)",
+    "markdownSupported": "Markdown is supported",
+    "readOnlyMode": "Comments are in read-only mode",
+    "loginRequired": "Please login with GitHub to post comments"
+  },
+  "auth": {
+    "loginWithGitHub": "Login with GitHub",
+    "logout": "Logout"
+  },
+  "buttons": {
+    "submit": "Submit",
+    "submitting": "Submitting",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "reset": "Reset",
+    "copy": "Copy",
+    "share": "Share",
+    "download": "Download",
+    "upload": "Upload",
+    "refresh": "Refresh",
+    "loading": "Loading...",
+    "retry": "Retry"
+  },
+  "common": {
+    "loading": "Loading",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info"
   }
 }

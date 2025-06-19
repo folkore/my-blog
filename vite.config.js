@@ -4,10 +4,13 @@ import path from 'path'
 import fs from 'fs'
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  base: '/my-blog/', // 添加基础路径配置
-  plugins: [
-    vue(),
+export default defineConfig(({ mode }) => {
+  const isProduction = mode === 'production'
+
+  return {
+    base: '/my-blog/', // 添加基础路径配置
+    plugins: [
+      vue(),
     {
       name: 'vite-plugin-spa-fallback',
       /**
@@ -50,6 +53,27 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
+    // 生产环境压缩配置
+    minify: isProduction ? 'terser' : false,
+    terserOptions: isProduction ? {
+      compress: {
+        // 移除 console
+        drop_console: true,
+        drop_debugger: true,
+        // 移除无用代码
+        dead_code: true,
+        // 移除未使用的变量
+        unused: true,
+      },
+      mangle: {
+        // 混淆变量名
+        toplevel: true,
+      },
+      format: {
+        // 移除注释
+        comments: false,
+      },
+    } : {},
     // 分包配置
     rollupOptions: {
       output: {
@@ -59,6 +83,7 @@ export default defineConfig({
       }
     }
   },
-  // 添加 raw 加载器配置
-  assetsInclude: ['**/*.md'],
+    // 添加 raw 加载器配置
+    assetsInclude: ['**/*.md'],
+  }
 })

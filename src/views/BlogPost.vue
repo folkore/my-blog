@@ -234,6 +234,12 @@ const backToList = () => {
   router.push("/blog");
 };
 
+// 获取文章完整URL
+const getPostUrl = () => {
+  const domain = import.meta.env.VITE_BLOG_DOMAIN || window.location.origin;
+  return `${domain}${route.path}`;
+};
+
 // 处理添加评论
 const handleCommentAdded = (newComment) => {
   if (blogPost.value) {
@@ -241,6 +247,13 @@ const handleCommentAdded = (newComment) => {
       blogPost.value.comments = [];
     }
     blogPost.value.comments.push(newComment);
+  }
+};
+
+// 处理GitHub评论加载完成
+const handleCommentsLoaded = (comments) => {
+  if (blogPost.value) {
+    blogPost.value.comments = comments;
   }
 };
 
@@ -402,8 +415,11 @@ watch(
 
             <CommentSection
               :post-id="blogPost.id"
+              :post-title="blogPost.title"
+              :post-url="getPostUrl()"
               :comments="blogPost.comments || []"
               @comment-added="handleCommentAdded"
+              @comments-loaded="handleCommentsLoaded"
             />
           </div>
         </div>

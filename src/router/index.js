@@ -55,6 +55,7 @@ const routes = [
       transition: 'fade'
     }
   },
+
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',

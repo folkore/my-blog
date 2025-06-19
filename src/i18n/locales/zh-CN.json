@@ -110,11 +110,33 @@
     "zh": "中文",
     "en": "英文"
   },
+  "comments": {
+    "poweredByGitHub": "基于 GitHub Issues",
+    "viewOnGitHub": "在 GitHub 查看",
+    "loadingComments": "加载评论中",
+    "githubLoginPrompt": "使用 GitHub 账号登录以发表评论",
+    "githubCommentPlaceholder": "写下你的评论... (支持 Markdown)",
+    "markdownSupported": "支持 Markdown 格式",
+    "readOnlyMode": "评论系统为只读模式",
+    "loginRequired": "请使用 GitHub 账号登录以发表评论"
+  },
+  "auth": {
+    "loginWithGitHub": "使用 GitHub 登录",
+    "logout": "退出登录"
+  },
   "buttons": {
     "submit": "提交",
+    "submitting": "提交中",
     "cancel": "取消",
     "save": "保存",
     "delete": "删除"
+  },
+  "common": {
+    "loading": "加载中",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告",
+    "info": "信息"
   },
   "footer": {
     "navigation": "导航",

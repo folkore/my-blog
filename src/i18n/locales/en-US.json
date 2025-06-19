@@ -110,11 +110,33 @@
       "zh": "Chinese",
       "en": "English"
     },
+    "comments": {
+      "poweredByGitHub": "Powered by GitHub Issues",
+      "viewOnGitHub": "View on GitHub",
+      "loadingComments": "Loading comments",
+      "githubLoginPrompt": "Login with GitHub to post comments",
+      "githubCommentPlaceholder": "Write your comment... (Markdown supported)",
+      "markdownSupported": "Markdown is supported",
+      "readOnlyMode": "Comments are in read-only mode",
+      "loginRequired": "Please login with GitHub to post comments"
+    },
+    "auth": {
+      "loginWithGitHub": "Login with GitHub",
+      "logout": "Logout"
+    },
     "buttons": {
       "submit": "Submit",
+      "submitting": "Submitting",
       "cancel": "Cancel",
       "save": "Save",
       "delete": "Delete"
+    },
+    "common": {
+      "loading": "Loading",
+      "error": "Error",
+      "success": "Success",
+      "warning": "Warning",
+      "info": "Info"
     },
     "footer": {
       "navigation": "Navigation",
