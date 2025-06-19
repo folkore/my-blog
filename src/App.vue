@@ -120,8 +120,9 @@ const openSearch = () => {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
   line-height: 1.6;
   color: var(--color-text);
   background-color: var(--color-background);
@@ -159,7 +160,8 @@ body {
 /* 页面过渡动画 */
 .page-enter-active,
 .page-leave-active {
-  transition: opacity var(--transition-normal) var(--bezier-smooth),
+  transition:
+    opacity var(--transition-normal) var(--bezier-smooth),
     transform var(--transition-normal) var(--bezier-bounce);
 }
 
@@ -462,35 +464,6 @@ body {
   margin: 0 0.15rem;
 }
 
-.nav-menu-active .nav-link {
-  animation: slideInDown 0.5s var(--bezier-bounce) forwards;
-  opacity: 0;
-}
-
-.nav-menu-active .nav-link:nth-child(1) {
-  animation-delay: 0.1s;
-}
-.nav-menu-active .nav-link:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.nav-menu-active .nav-link:nth-child(3) {
-  animation-delay: 0.3s;
-}
-.nav-menu-active .nav-link:nth-child(4) {
-  animation-delay: 0.4s;
-}
-
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* 菜单按钮动画优化 */
 .menu-toggle {
   position: relative;
@@ -660,7 +633,9 @@ body {
   font-size: 1.25rem;
   font-weight: 600;
   color: white;
-  transition: transform 0.35s var(--bezier-bounce), box-shadow 0.35s;
+  transition:
+    transform 0.35s var(--bezier-bounce),
+    box-shadow 0.35s;
 }
 
 .logo:hover {
