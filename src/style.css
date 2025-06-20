@@ -123,7 +123,7 @@ h1 {
 button {
   border-radius: 8px;
   border: 1px solid var(--border-color);
-  padding: 0.6em 1.2em;
+  /* padding: 0.6em 1.2em; */
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
@@ -207,7 +207,37 @@ button:focus-visible {
 /* 移动设备上的搜索样式调整 */
 @media (max-width: 768px) {
   .nav-right {
-    gap: 0.5rem !important;
+    gap: 0.25rem !important;
+    flex-shrink: 0;
+  }
+
+  /* 搜索按钮在移动端的优化 */
+  .search-btn {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .search-btn span {
+    margin: 0 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  .search-btn .kbd-shortcut {
+    display: none; /* 移动端隐藏快捷键提示 */
+  }
+
+  /* 语言切换器在移动端的优化 */
+  .desktop-lang .lang-dropdown-toggle {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8rem;
+    min-width: 60px;
+  }
+
+  /* 主题切换按钮在移动端的优化 */
+  .desktop-theme {
+    padding: 0.3rem;
+    width: 32px;
+    height: 32px;
   }
 }
 
@@ -302,6 +332,9 @@ button:focus-visible {
 
 .nav-right {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* ===== Mobile drawer modern style ===== */

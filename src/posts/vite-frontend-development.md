@@ -73,7 +73,7 @@ pnpm install
 pnpm dev
 ```
 
-浏览器将自动打开 `http://localhost:5173/`，你将体验到毫秒级的冷启动。
+浏览器将自动打开 `http://localhost:3000/`，你将体验到毫秒级的冷启动。
 
 ## 核心配置解读
 

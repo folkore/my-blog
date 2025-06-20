@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue";
+import { useRoute } from "vue-router";
 import BackToTop from "./components/BackToTop.vue";
 import ReadingProgress from "./components/ReadingProgress.vue";
 import PageTransition from "./components/PageTransition.vue";
@@ -9,6 +10,7 @@ import AppFooter from "./components/AppFooter.vue";
 import { usePostsStore } from "./store/index.js";
 import Live2DPet from "./components/Live2DPet.vue";
 
+const route = useRoute();
 const postsStore = usePostsStore();
 
 const globalSearch = ref(null);
@@ -23,15 +25,16 @@ const openSearch = () => {
     <!-- <ReadingProgress /> -->
     <HeaderMenu @open-search="openSearch" />
 
-    <main class="main">
-      <router-view v-slot="{ Component, route }">
-        <PageTransition :name="route.meta.transition || 'page'">
-          <component :is="Component" :key="route.path" />
-        </PageTransition>
-      </router-view>
-    </main>
-
-    <AppFooter />
+    <PageTransition :name="route.meta.transition || 'page'">
+      <div :key="route.path" class="page-container">
+        <main class="main">
+          <router-view v-slot="{ Component }">
+            <component :is="Component" />
+          </router-view>
+        </main>
+        <AppFooter />
+      </div>
+    </PageTransition>
 
     <BackToTop />
     <Live2DPet />
@@ -146,6 +149,13 @@ body {
   --nav-background: rgba(255, 255, 255, 0.8);
   --nav-background-dark: rgba(18, 18, 18, 0.8);
   --blur-strength: 12px;
+}
+
+/* 页面容器 */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - var(--header-height, 64px));
 }
 
 /* 主要内容区域 */
@@ -381,6 +391,46 @@ body {
     --header-height: var(--header-height-mobile);
     --content-width: 100%;
     --nav-link-size: 0.8125rem;
+  }
+
+  /* 头部导航移动端优化 */
+  .nav-right {
+    gap: 0.25rem !important;
+    flex-shrink: 0;
+  }
+
+  /* 搜索按钮移动端优化 */
+  .search-btn {
+    padding: 0.3rem 0.5rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  .search-btn span {
+    margin: 0 0.25rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  .search-btn .kbd-shortcut {
+    display: none !important; /* 移动端隐藏快捷键提示 */
+  }
+
+  /* 语言切换器移动端优化 */
+  .desktop-lang .lang-dropdown-toggle {
+    padding: 0.3rem 0.5rem !important;
+    font-size: 0.8rem !important;
+    min-width: 60px !important;
+  }
+
+  /* 主题切换按钮移动端优化 */
+  .desktop-theme {
+    padding: 0.3rem !important;
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .desktop-theme .theme-icon svg {
+    width: 16px !important;
+    height: 16px !important;
   }
 }
 

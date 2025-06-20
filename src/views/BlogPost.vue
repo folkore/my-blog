@@ -3,12 +3,12 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import ReadingProgress from "../components/ReadingProgress.vue";
 import ReadingProgressNotification from "../components/ReadingProgressNotification.vue";
-import FontSettingsPanel from "../components/FontSettingsPanel.vue";
 import BookmarkButton from "../components/BookmarkButton.vue";
 import ShareButtons from "../components/ShareButtons.vue";
 import CommentSection from "../components/CommentSection.vue";
 import MarkdownRenderer from "../components/MarkdownRenderer.vue";
 import TableOfContents from "../components/TableOfContents.vue";
+import ArticleToolbar from "../components/ArticleToolbar.vue";
 import { useI18n } from "vue-i18n";
 import { usePostsStore } from "../store";
 import { parseMarkdown } from "../utils/markdown-loader";
@@ -295,9 +295,6 @@ watch(
       @close="closeProgressNotification"
     />
 
-    <!-- 字体设置面板 -->
-    <FontSettingsPanel v-if="blogPost && !isLoading && !error" />
-
     <!-- 固定返回按钮 -->
     <button
       class="floating-back-button"
@@ -335,103 +332,109 @@ watch(
       </button>
     </div>
 
-    <!-- 文章内容 -->
-    <article
+    <!-- 文章工具栏 -->
+    <ArticleToolbar
       v-if="blogPost && !isLoading && !error"
-      ref="articleRef"
-      class="blog-post-article"
-    >
-      <!-- 文章头部 -->
-      <div class="container">
-        <header class="blog-post-header">
-          <div class="post-meta-top">
-            <span class="post-category">{{ blogPost.tags[0] }}</span>
-            <span class="separator">·</span>
-            <span class="post-read-time">{{
-              calculateReadTime(postContent)
-            }}</span>
-          </div>
-          <div class="post-title-section">
-            <h1 class="post-title">{{ blogPost.title }}</h1>
-            <BookmarkButton
-              :article-slug="blogPost.slug"
-              :article-data="{
-                title: blogPost.title,
-                date: blogPost.date,
-                tags: blogPost.tags,
-                excerpt: blogPost.excerpt,
-                category: blogPost.tags[0],
-              }"
-              size="large"
-              variant="floating"
-              show-label
-            />
-          </div>
-          <div class="post-meta-author">
-            <img
-              :src="blogPost.author.avatar"
-              :alt="blogPost.author.name"
-              class="author-avatar"
-            />
-            <div class="author-info">
-              <span class="author-name">{{ blogPost.author.name }}</span>
-              <span class="post-date">{{ formattedDate }}</span>
-            </div>
-          </div>
-        </header>
+      :article-title="blogPost.title"
+      :read-time="calculateReadTime(postContent)"
+    />
 
-        <div
-          v-if="blogPost.cover"
-          class="post-cover"
-          :style="{ backgroundImage: `url(${blogPost.cover})` }"
-        ></div>
-      </div>
-
-      <!-- 文章主体 -->
-      <div class="post-content-wrapper">
+    <!-- 文章内容区 -->
+    <div v-if="blogPost && !isLoading && !error" class="content-grid">
+      <!-- 主内容：文章 -->
+      <article ref="articleRef" class="blog-post-article">
+        <!-- 文章头部 -->
         <div class="container">
-          <div class="blog-post-content">
-            <!-- Markdown 渲染 -->
-            <MarkdownRenderer
-              v-if="isMarkdownContent"
-              ref="markdownRef"
-              :content="postContent"
-            />
-            <!-- HTML 渲染 -->
-            <div v-else v-html="postContent"></div>
-
-            <!-- 文章底部 -->
-            <div class="post-footer">
-              <div class="post-tags">
-                <span v-for="tag in blogPost.tags" :key="tag" class="tag">
-                  {{ tag }}
-                </span>
-              </div>
-              <ShareButtons
-                :url="`https://your-domain.com${route.path}`"
-                :title="blogPost.title"
+          <header class="blog-post-header">
+            <div class="post-meta-top">
+              <span class="post-category">{{ blogPost.tags[0] }}</span>
+              <span class="separator">·</span>
+              <span class="post-read-time">{{
+                calculateReadTime(postContent)
+              }}</span>
+            </div>
+            <div class="post-title-section">
+              <h1 class="post-title">{{ blogPost.title }}</h1>
+              <BookmarkButton
+                :article-slug="blogPost.slug"
+                :article-data="{
+                  title: blogPost.title,
+                  date: blogPost.date,
+                  tags: blogPost.tags,
+                  excerpt: blogPost.excerpt,
+                  category: blogPost.tags[0],
+                }"
+                size="large"
+                variant="floating"
+                show-label
               />
             </div>
+            <div class="post-meta-author">
+              <img
+                :src="blogPost.author.avatar"
+                :alt="blogPost.author.name"
+                class="author-avatar"
+              />
+              <div class="author-info">
+                <span class="author-name">{{ blogPost.author.name }}</span>
+                <span class="post-date">{{ formattedDate }}</span>
+              </div>
+            </div>
+          </header>
 
-            <CommentSection
-              :post-id="blogPost.id"
-              :post-title="blogPost.title"
-              :post-url="getPostUrl()"
-              :comments="blogPost.comments || []"
-              @comment-added="handleCommentAdded"
-              @comments-loaded="handleCommentsLoaded"
-            />
-          </div>
+          <div
+            v-if="blogPost.cover"
+            class="post-cover"
+            :style="{ backgroundImage: `url(${blogPost.cover})` }"
+          ></div>
         </div>
 
-        <!-- 目录组件 -->
-        <TableOfContents
-          v-if="headings.length > 0"
-          :headings="headings"
-          class="toc-container"
-        />
-      </div>
-    </article>
+        <!-- 文章主体 -->
+        <div class="post-content-wrapper">
+          <div class="container">
+            <div class="blog-post-content">
+              <!-- Markdown 渲染 -->
+              <MarkdownRenderer
+                v-if="isMarkdownContent"
+                ref="markdownRef"
+                :content="postContent"
+              />
+              <!-- HTML 渲染 -->
+              <div v-else v-html="postContent"></div>
+
+              <!-- 文章底部 -->
+              <div class="post-footer">
+                <div class="post-tags">
+                  <span v-for="tag in blogPost.tags" :key="tag" class="tag">
+                    {{ tag }}
+                  </span>
+                </div>
+                <ShareButtons
+                  :url="`https://your-domain.com${route.path}`"
+                  :title="blogPost.title"
+                />
+              </div>
+
+              <CommentSection
+                :post-id="blogPost.id"
+                :post-title="blogPost.title"
+                :post-url="getPostUrl()"
+                :comments="blogPost.comments || []"
+                @comment-added="handleCommentAdded"
+                @comments-loaded="handleCommentsLoaded"
+              />
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 侧边栏：目录 -->
+      <aside class="sidebar-container">
+        <TableOfContents v-if="headings.length > 0" :headings="headings" />
+      </aside>
+    </div>
+
+    <!-- 移动端底部操作栏 已移除，还原 -->
   </div>
 </template>
 
@@ -440,8 +443,15 @@ watch(
 .blog-post-page {
   position: relative;
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: hidden; /* 默认隐藏，防止移动端滚动条 */
   animation: fade-in 0.4s ease;
+}
+
+/* 在桌面端，为保证 sticky 生效，需要移除 overflow 限制 */
+@media (min-width: 1025px) {
+  .blog-post-page {
+    overflow-x: visible;
+  }
 }
 
 .container {
@@ -452,13 +462,36 @@ watch(
   box-sizing: border-box;
 }
 
-/* 目录基础定位，先全局固定到右上 */
-.toc-container {
-  position: fixed;
-  top: 100px;
-  right: 24px;
+/* 全局内容网格布局 */
+.content-grid {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 40px auto 0;
+  padding: 0 20px;
+}
+
+.blog-post-article {
+  flex: 1;
+  min-width: 0; /* 允许 flex item 收缩 */
+}
+
+.sidebar-container {
   width: 280px;
-  z-index: 20;
+  flex-shrink: 0;
+  position: sticky;
+  top: 80px; /* 与 TOC 内部的 sticky top 值保持一致或略小 */
+}
+
+@media (max-width: 1024px) {
+  .sidebar-container {
+    display: none;
+  }
+  .content-grid {
+    padding: 0; /* 移动端不需要外层 padding */
+  }
 }
 
 /* 文章内容布局 */
@@ -512,39 +545,15 @@ watch(
   font-size: 0.875em !important;
 }
 
-/* 响应式覆盖 */
+/* 清理旧的/冲突的响应式布局 */
 @media (max-width: 991px) {
-  .toc-container {
-    position: static;
-    width: 100%;
-    max-width: 100%;
-    margin: 2rem 0;
-    padding: 0 20px;
-    top: auto;
-    right: auto;
-  }
-
   .blog-post-article {
     padding-right: 0;
   }
 }
 
 @media (min-width: 992px) {
-  .post-content-wrapper {
-    position: relative;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-
-  /* 为正文区域预留宽度 */
-  .blog-post-article {
-    max-width: 900px;
-    padding-right: 340px;
-  }
-
-  .post-content-wrapper > .container {
-    max-width: 900px;
-  }
+  /* 移除，因为 content-grid 已处理 */
 }
 
 /* 其他样式保持不变 */
@@ -606,9 +615,7 @@ watch(
 }
 
 .blog-post-article {
-  max-width: 1080px;
-  margin: 40px auto 0;
-  padding: 0 20px;
+  /* 移除 max-width 和 margin: auto，交由父级 grid 控制 */
 }
 
 .blog-post-header {
@@ -691,12 +698,6 @@ watch(
   height: 400px;
 }
 
-.post-content-wrapper {
-  position: relative;
-  max-width: 100%;
-  margin: 0 auto;
-}
-
 .post-footer {
   display: flex;
   justify-content: space-between;
@@ -742,6 +743,17 @@ watch(
 
   .post-cover {
     height: 250px;
+  }
+
+  .post-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .floating-back-button {
+    bottom: calc(1rem + 4rem);
+    right: 1rem;
   }
 }
 

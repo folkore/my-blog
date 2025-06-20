@@ -13,7 +13,7 @@ const {
 // 面板状态
 const isOpen = ref(false);
 const isDragging = ref(false);
-const panelPosition = ref({ x: 0, y: 0 });
+// 面板位置不再使用拖拽定位，而是固定在头部
 const panelRef = ref(null);
 
 // 字体选项
@@ -22,8 +22,6 @@ const fontFamilyOptions = [
   { value: "serif", label: "衬线字体", preview: "Serif Font" },
   { value: "sans-serif", label: "无衬线字体", preview: "Sans-serif Font" },
 ];
-
-// 计算属性已移除，直接在模板中使用 fontSettings.fontFamily
 
 // 切换面板显示
 const togglePanel = () => {
@@ -63,111 +61,6 @@ const resetAllSettings = () => {
   updateBrightnessSettings(1.0);
 };
 
-// 重置面板位置
-const resetPanelPosition = () => {
-  panelPosition.value = { x: 0, y: 0 };
-};
-
-// 拖拽相关
-let dragStartX = 0;
-let dragStartY = 0;
-let initialX = 0;
-let initialY = 0;
-
-// 边界检查函数
-const constrainPosition = (x, y) => {
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  const panelWidth = 280;
-  const panelHeight = Math.min(400, viewportHeight * 0.6); // 面板高度
-
-  // 计算面板的初始位置（基于CSS：top: 20vh, right: 5rem）
-  const baseTop = viewportHeight * 0.2; // 20vh
-  const baseRight = 112; // 7rem = 112px
-  const baseLeft = viewportWidth - baseRight - panelWidth;
-
-  // 边界约束 - 确保面板始终在视口内
-  const minX = -baseLeft + 20; // 左边界，保留20px
-  const maxX = viewportWidth - baseRight - 20; // 右边界，保留20px
-
-  // 头部菜单高度，防止拖拽到导航区域
-  const headerSafeZone = 72; // 72px 高度
-
-  // 计算允许的顶部偏移量，使面板顶部始终位于 headerSafeZone 之下
-  const minY = Math.max(-baseTop + 20, headerSafeZone - baseTop);
-
-  const maxY = viewportHeight - baseTop - panelHeight - 20; // 下边界，保留20px
-
-  return {
-    x: Math.max(minX, Math.min(maxX, x)),
-    y: Math.max(minY, Math.min(maxY, y)),
-  };
-};
-
-const startDrag = (event) => {
-  // 移动端禁用拖拽
-  if (window.innerWidth <= 768) return;
-
-  // 只允许在面板头部拖拽
-  if (!event.target.closest(".panel-header")) return;
-
-  event.preventDefault();
-  isDragging.value = true;
-
-  const clientX =
-    event.type === "mousedown" ? event.clientX : event.touches[0].clientX;
-  const clientY =
-    event.type === "mousedown" ? event.clientY : event.touches[0].clientY;
-
-  dragStartX = clientX;
-  dragStartY = clientY;
-  initialX = panelPosition.value.x;
-  initialY = panelPosition.value.y;
-
-  // 添加事件监听器
-  document.addEventListener("mousemove", handleDrag, { passive: false });
-  document.addEventListener("mouseup", stopDrag, { passive: false });
-  document.addEventListener("touchmove", handleDrag, { passive: false });
-  document.addEventListener("touchend", stopDrag, { passive: false });
-
-  // 防止文本选择
-  document.body.style.userSelect = "none";
-  document.body.style.webkitUserSelect = "none";
-};
-
-const handleDrag = (event) => {
-  if (!isDragging.value) return;
-
-  event.preventDefault();
-
-  const clientX =
-    event.type === "mousemove" ? event.clientX : event.touches[0].clientX;
-  const clientY =
-    event.type === "mousemove" ? event.clientY : event.touches[0].clientY;
-
-  const deltaX = clientX - dragStartX;
-  const deltaY = clientY - dragStartY;
-
-  // 应用边界约束
-  const newPosition = constrainPosition(initialX + deltaX, initialY + deltaY);
-
-  panelPosition.value = newPosition;
-};
-
-const stopDrag = () => {
-  isDragging.value = false;
-
-  // 移除所有事件监听器
-  document.removeEventListener("mousemove", handleDrag);
-  document.removeEventListener("mouseup", stopDrag);
-  document.removeEventListener("touchmove", handleDrag);
-  document.removeEventListener("touchend", stopDrag);
-
-  // 恢复文本选择
-  document.body.style.userSelect = "";
-  document.body.style.webkitUserSelect = "";
-};
-
 // 点击外部关闭面板
 const handleClickOutside = (event) => {
   if (
@@ -184,7 +77,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside);
-  stopDrag();
 });
 </script>
 
@@ -199,14 +91,15 @@ onUnmounted(() => {
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
+        width="18"
+        height="18"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
+        class="font-icon"
       >
         <path d="M4 7V4h16v3" />
         <path d="M9 20h6" />
@@ -216,31 +109,9 @@ onUnmounted(() => {
 
     <!-- 设置面板 -->
     <Transition name="panel-fade">
-      <div
-        v-if="isOpen"
-        ref="panelRef"
-        class="font-settings-panel"
-        :class="{ dragging: isDragging }"
-        :style="{
-          transform: `translate(${panelPosition.x}px, ${panelPosition.y}px)`,
-        }"
-        @mousedown="startDrag"
-        @touchstart="startDrag"
-      >
+      <div v-if="isOpen" ref="panelRef" class="font-settings-panel">
         <!-- 面板头部 -->
-        <div class="panel-header" title="拖拽此区域移动面板">
-          <!-- 拖拽指示器 -->
-          <div class="drag-indicator">
-            <div class="drag-dots">
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-          </div>
-
+        <div class="panel-header">
           <div class="panel-title">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -259,48 +130,22 @@ onUnmounted(() => {
             </svg>
             阅读设置
           </div>
-
-          <div class="panel-actions">
-            <button
-              class="panel-reset"
-              @click="resetPanelPosition"
-              title="重置位置"
-              v-if="panelPosition.x !== 0 || panelPosition.y !== 0"
+          <button class="close-button" @click="closePanel" title="关闭设置面板">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                <path d="M21 3v5h-5" />
-                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                <path d="M3 21v-5h5" />
-              </svg>
-            </button>
-            <button class="panel-close" @click="closePanel" title="关闭">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
 
         <!-- 面板内容 -->
@@ -405,58 +250,100 @@ onUnmounted(() => {
             <label class="setting-label">
               亮度
               <span class="setting-value"
-                >{{ Math.round(brightnessSettings.brightness * 100) }}%</span
+                >{{
+                  isNaN(brightnessSettings)
+                    ? 100
+                    : Math.round(brightnessSettings * 100)
+                }}%</span
               >
             </label>
             <div class="slider-container">
               <button
                 class="slider-btn"
-                @click="updateBrightness(brightnessSettings.brightness - 0.1)"
-                :disabled="brightnessSettings.brightness <= 0.6"
+                @click="updateBrightness(brightnessSettings - 0.1)"
+                :disabled="brightnessSettings <= 0.5"
               >
-                ☀-
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                -
               </button>
               <input
                 type="range"
-                min="0.6"
-                max="1.0"
-                step="0.1"
-                :value="brightnessSettings.brightness"
+                min="0.5"
+                max="1"
+                step="0.05"
+                :value="brightnessSettings"
                 @input="updateBrightness(Number($event.target.value))"
                 class="slider"
               />
               <button
                 class="slider-btn"
-                @click="updateBrightness(brightnessSettings.brightness + 0.1)"
-                :disabled="brightnessSettings.brightness >= 1.0"
+                @click="updateBrightness(brightnessSettings + 0.1)"
+                :disabled="brightnessSettings >= 1"
               >
-                ☀+
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                +
               </button>
             </div>
           </div>
 
           <!-- 重置按钮 -->
-          <div class="setting-group">
-            <button class="reset-btn" @click="resetAllSettings">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                <path d="M21 3v5h-5" />
-                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                <path d="M3 21v-5h5" />
-              </svg>
-              重置设置
-            </button>
-          </div>
+          <button class="reset-btn" @click="resetAllSettings">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
+            重置所有设置
+          </button>
         </div>
       </div>
     </Transition>
@@ -464,94 +351,63 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* 补充缺失的CSS变量 */
+/* 字体设置按钮与面板样式 */
 .font-settings-wrapper {
-  /* 确保所有必要的CSS变量都有默认值 */
-  --color-card-background: var(--card-bg, #ffffff);
-  --color-border: var(--border-color, #e2e8f0);
-  --color-secondary-background: var(--bg-secondary, #f8fafc);
-  --color-tertiary-background: var(--bg-secondary, #f1f5f9);
-  --color-text: var(--text-primary, #1e293b);
-  --color-secondary-text: var(--text-secondary, #475569);
-  --color-primary: var(--primary-color, #3385ff);
-  --color-primary-rgb: 51, 133, 255;
-  --color-error: #ef4444;
-  --radius-xl: 0.75rem;
-  --radius-md: 0.375rem;
-  --radius-full: 9999px;
-  --shadow-xl:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  --blur-lg: 16px;
-  --transition-normal: 0.3s;
-  --bezier-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* 移除 transform，防止影响子元素 position: fixed 的参照系 */
-  position: fixed;
-  top: calc(50vh - 28px); /* 56px 按钮高度的一半，保持按钮垂直居中 */
-  right: 2rem;
-  z-index: 1000;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
 }
 
-/* 触发按钮 */
 .font-settings-trigger {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--color-card-background);
-  border: none;
-  color: var(--color-text);
-  cursor: pointer;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
-  box-shadow: var(--shadow-xl);
-
-  transition:
-    transform 0.3s ease,
-    background-color 0.3s ease;
-}
-
-.font-settings-trigger:hover {
-  transform: translateY(-5px);
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.font-settings-trigger.active {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-/* 设置面板 */
-.font-settings-panel {
-  position: fixed;
-  top: 20vh; /* 从顶部20%开始，确保完全可见 */
-  right: 7rem; /* 稍远离触发按钮 */
-  width: 280px;
-  max-width: calc(100vw - 6rem); /* 确保不超出屏幕 */
-  max-height: 60vh; /* 限制最大高度为60%视口高度 */
-
-  background: var(--color-card-background);
+  width: 36px;
+  height: 36px;
+  padding: 0; /* 重置全局button的padding */
+  border-radius: var(--radius-lg);
+  background: var(--color-tertiary-background);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
+  color: var(--color-secondary-text);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-size: inherit; /* 重置全局button的font-size */
+  font-weight: inherit; /* 重置全局button的font-weight */
+}
 
+.font-settings-trigger:hover,
+.font-settings-trigger.active {
+  color: var(--color-text);
+  background: var(--color-secondary-background);
+  border-color: var(--color-border);
+}
+
+.font-icon {
+  flex-shrink: 0;
+  opacity: 1;
+  transition: all var(--transition-normal);
+}
+
+/* 字体设置面板 */
+.font-settings-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem); /* 正好在按钮下方 */
+  right: 0;
+  width: 280px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   backdrop-filter: blur(var(--blur-lg));
   -webkit-backdrop-filter: blur(var(--blur-lg));
-
   overflow: hidden; /* 改为hidden，让内容区域单独处理滚动 */
   user-select: none;
   z-index: 1001;
 }
 
-.font-settings-panel.dragging {
-  cursor: grabbing;
-  transform-origin: center;
-  box-shadow:
-    var(--shadow-xl),
-    0 0 0 1px var(--color-primary);
+/* 在文章工具栏中的特殊样式 */
+.article-toolbar .font-settings-panel {
+  z-index: 100; /* 降低z-index，避免与sticky工具栏冲突 */
 }
 
 /* 面板头部 */
@@ -562,135 +418,46 @@ onUnmounted(() => {
   padding: 1rem;
   background: var(--color-secondary-background);
   border-bottom: 1px solid var(--color-border);
-  cursor: grab;
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   position: relative;
-
-  /* 增强拖拽区域的视觉提示 */
-  transition: background-color var(--transition-normal);
-}
-
-.panel-header:hover {
-  background: var(--color-tertiary-background);
-}
-
-.panel-header:active {
-  cursor: grabbing;
-  background: var(--color-tertiary-background);
-}
-
-/* 拖拽指示器 - 改进设计 */
-.drag-indicator {
-  margin-right: 0.75rem;
-  padding: 0.25rem;
-  border-radius: var(--radius-md);
-  transition: background-color var(--transition-normal);
-}
-
-.panel-header:hover .drag-indicator {
-  background: rgba(var(--color-primary-rgb), 0.1);
-}
-
-.drag-dots {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap: 3px;
-  align-items: center;
-  justify-items: center;
-  width: 16px;
-  height: 20px;
-}
-
-.drag-dots span {
-  width: 4px;
-  height: 4px;
-  background: var(--color-secondary-text);
-  border-radius: 50%;
-  opacity: 0.7;
-  transition: all var(--transition-normal);
-}
-
-.panel-header:hover .drag-dots span {
-  background: var(--color-primary);
-  opacity: 1;
-  transform: scale(1.2);
 }
 
 .panel-title {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: 600;
-  color: var(--color-text, #1e293b);
   font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
 }
 
-.panel-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.panel-reset,
-.panel-close {
-  padding: 0.25rem;
-  background: transparent;
-  border: none;
-  color: var(--color-secondary-text, #475569);
-  cursor: pointer;
-  border-radius: var(--radius-md, 0.375rem);
-  transition: all var(--transition-normal);
-
+.close-button {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  border: none;
+  color: var(--color-secondary-text);
+  cursor: pointer;
+  transition: all var(--transition-normal);
 }
 
-.panel-reset:hover,
-.panel-close:hover {
-  background: var(--color-tertiary-background, #f1f5f9);
-  color: var(--color-text, #1e293b);
-}
-
-.panel-reset {
-  color: var(--color-primary);
-}
-
-.panel-reset:hover {
-  background: rgba(var(--color-primary-rgb, 59, 130, 246), 0.1);
-  color: var(--color-primary);
+.close-button:hover {
+  color: var(--color-text);
+  background: var(--color-tertiary-background);
 }
 
 /* 面板内容 */
 .panel-content {
   padding: 1rem;
-  cursor: default;
+  max-height: 60vh;
   overflow-y: auto;
-  max-height: calc(60vh - 80px); /* 减去头部高度 */
-
-  /* 自定义滚动条样式 */
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
 }
 
-.panel-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.panel-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.panel-content::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: var(--radius-full);
-}
-
-.panel-content::-webkit-scrollbar-thumb:hover {
-  background: var(--color-secondary-text);
-}
-
+/* 设置组 */
 .setting-group {
   margin-bottom: 1.5rem;
 }
@@ -865,22 +632,30 @@ onUnmounted(() => {
 /* 动画效果 */
 .panel-fade-enter-active,
 .panel-fade-leave-active {
-  transition: all 0.3s var(--bezier-smooth);
+  transition: all 0.2s ease-out;
 }
 
-.panel-fade-enter-from {
-  opacity: 0;
-  transform: translateX(20px) scale(0.95);
-}
-
+.panel-fade-enter-from,
 .panel-fade-leave-to {
   opacity: 0;
-  transform: translateX(10px) scale(0.98);
+  transform: translateY(-5px);
 }
 
 /* 暗色主题适配 */
+.dark-theme .font-settings-trigger {
+  background: var(--color-tertiary-background);
+  border-color: var(--color-border);
+  color: var(--color-secondary-text);
+}
+
+.dark-theme .font-settings-trigger:hover,
+.dark-theme .font-settings-trigger.active {
+  background: var(--color-secondary-background);
+  color: var(--color-text);
+}
+
 .dark-theme .font-settings-panel {
-  background: var(--color-card-background);
+  background: var(--color-background);
   border-color: var(--color-border);
   box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.3),
@@ -894,30 +669,30 @@ onUnmounted(() => {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .font-settings-wrapper {
-    position: fixed;
-    bottom: 1rem;
-    right: 1rem;
-    top: auto;
-    /* 移除 transform，保证移动端参照视口 */
-  }
-
   .font-settings-panel {
     position: fixed;
-    bottom: 5rem;
-    right: 1rem;
-    left: 1rem;
     top: auto;
+    bottom: 5rem;
+    left: 1rem;
+    right: 1rem;
     width: auto;
     max-height: 60vh;
-    overflow-y: auto;
     z-index: 1000;
-    transform: none !important; /* 移动端不使用拖拽变换 */
   }
 
-  .font-settings-trigger {
-    width: 56px;
-    height: 56px;
+  /* 在文章工具栏中的移动端样式 */
+  .article-toolbar .font-settings-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    bottom: auto;
+    right: auto;
+    width: calc(100vw - 2rem);
+    max-width: 320px;
+    max-height: 80vh;
+    z-index: 1000;
+    box-shadow: var(--shadow-xl);
   }
 }
 

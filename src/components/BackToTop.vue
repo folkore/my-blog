@@ -110,7 +110,9 @@ const dashOffset = computed(
   z-index: 99;
   border: none;
   padding: 0;
-  transition: transform 0.3s ease, background-color 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    background-color 0.3s ease;
   position: fixed;
 }
 
@@ -135,7 +137,9 @@ const dashOffset = computed(
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s, transform 0.3s;
+  transition:
+    opacity 0.3s,
+    transform 0.3s;
 }
 
 .fade-enter-from,
@@ -150,5 +154,13 @@ const dashOffset = computed(
 
 .back-to-top:hover .ring-progress {
   stroke: #fff;
+}
+
+/* 移动端（≤768px）调整位置，保持与其他按钮一致间距 */
+@media (max-width: 768px) {
+  .back-to-top {
+    bottom: 1rem;
+    right: 1rem;
+  }
 }
 </style>
