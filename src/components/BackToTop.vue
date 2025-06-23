@@ -116,10 +116,17 @@ const dashOffset = computed(
   position: fixed;
 }
 
-.back-to-top:hover {
-  transform: translateY(-5px);
-  background-color: var(--primary-color);
-  color: #fff;
+/* 删除旧的 .back-to-top:hover 与 .back-to-top:hover .ring-progress 样式并改为仅在支持 hover 的环境下生效 */
+@media (hover: hover) and (pointer: fine) {
+  .back-to-top:hover {
+    transform: translateY(-5px);
+    background-color: var(--primary-color);
+    color: #fff;
+  }
+
+  .back-to-top:hover .ring-progress {
+    stroke: #fff;
+  }
 }
 
 /* 进度圆定位在按钮内部 */
@@ -150,10 +157,6 @@ const dashOffset = computed(
 
 .ring-progress {
   transition: stroke 0.3s;
-}
-
-.back-to-top:hover .ring-progress {
-  stroke: #fff;
 }
 
 /* 移动端（≤768px）调整位置，保持与其他按钮一致间距 */
