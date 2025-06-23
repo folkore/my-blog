@@ -30,6 +30,13 @@ const savedProgress = ref(null);
 let scrollHandler = null;
 let progressUpdateTimer = null;
 
+// 新增：监听 blogPost，动态更新页面标题
+watch(blogPost, (newPost) => {
+  if (newPost && newPost.title) {
+    document.title = `${newPost.title} - 点滴`;
+  }
+});
+
 try {
   route = useRoute();
   router = useRouter();

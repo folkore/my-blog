@@ -1,14 +1,14 @@
 {
   "nav": {
     "home": "首页",
-    "blog": "博客",
+    "blog": "文章",
     "bookmarks": "书签",
     "about": "关于",
     "contact": "联系",
     "menu": "菜单"
   },
   "brand": {
-    "name": "我的博客",
+    "name": "点滴",
     "slogan": "分享技术与生活的点点滴滴"
   },
   "theme": {

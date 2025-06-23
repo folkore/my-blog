@@ -74,8 +74,11 @@ onUnmounted(() => {
       <!-- Logo区域 -->
       <div class="header__brand">
         <router-link to="/" class="header__logo" @click="isMenuOpen = false">
-          <div class="header__logo-icon">M</div>
-          <span class="header__logo-text">{{ t("brand.name") }}</span>
+          <div class="header__logo-integrated">
+            <span class="header__logo-text">Memoir</span>
+            <span class="header__logo-separator"></span>
+            <span class="header__logo-tagline">Stories in Time</span>
+          </div>
         </router-link>
       </div>
 
@@ -333,26 +336,135 @@ onUnmounted(() => {
 .header__logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
   text-decoration: none;
   color: inherit;
+  padding: 8px 16px;
+  border-radius: 4px;
+  background: linear-gradient(
+    to right,
+    transparent 50%,
+    var(--color-hover-background) 50%
+  );
+  background-size: 200% 100%;
+  background-position: 0 0;
+  transition: all 0.4s ease;
 }
 
-.header__logo-icon {
-  width: 32px;
-  height: 32px;
-  background: var(--color-primary);
-  color: white;
-  border-radius: 8px;
+.header__logo:hover {
+  background-position: -100% 0;
+}
+
+.header__logo-integrated {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-weight: bold;
+  gap: 12px;
 }
 
 .header__logo-text {
+  font-family: "Cormorant Garamond", "Times New Roman", serif;
   font-weight: 600;
-  font-size: 1.125rem;
+  font-size: 1.75rem;
+  letter-spacing: 0.5px;
+  color: var(--color-text);
+  transition: all 0.4s ease;
+  position: relative;
+}
+
+.header__logo-text::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--color-primary);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.4s ease;
+}
+
+.header__logo:hover .header__logo-text::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.header__logo-separator {
+  width: 1px;
+  height: 24px;
+  background: var(--color-border);
+  margin: 0 12px;
+  transition: background-color 0.4s ease;
+}
+
+.header__logo-tagline {
+  font-family: "Poppins", sans-serif;
+  font-weight: 300;
+  font-size: 0.875rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-secondary-text);
+  transition: all 0.4s ease;
+}
+
+.header__logo:hover .header__logo-text {
+  color: var(--color-primary);
+}
+
+.header__logo:hover .header__logo-separator {
+  background: var(--color-primary);
+}
+
+.header__logo:hover .header__logo-tagline {
+  color: var(--color-primary);
+  letter-spacing: 2px;
+}
+
+/* 深色模式适配 */
+.dark-theme .header__logo {
+  background: linear-gradient(
+    to right,
+    transparent 50%,
+    var(--color-hover-background-dark) 50%
+  );
+  background-size: 200% 100%;
+  background-position: 0 0;
+}
+
+.dark-theme .header__logo-text {
+  color: var(--color-text);
+}
+
+.dark-theme .header__logo-separator {
+  background: var(--color-border-dark);
+}
+
+.dark-theme .header__logo-tagline {
+  color: var(--color-secondary-text);
+}
+
+.dark-theme .header__logo:hover .header__logo-text,
+.dark-theme .header__logo:hover .header__logo-tagline {
+  color: var(--color-primary);
+}
+
+.dark-theme .header__logo:hover .header__logo-separator {
+  background: var(--color-primary);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .header__logo {
+    padding: 6px 12px;
+  }
+
+  .header__logo-text {
+    font-size: 1.5rem;
+  }
+
+  .header__logo-separator,
+  .header__logo-tagline {
+    display: none;
+  }
 }
 
 /* 菜单按钮样式 */
@@ -489,35 +601,6 @@ onUnmounted(() => {
 
 .header__theme-toggle:hover {
   background: var(--color-hover-background);
-}
-
-/* 深色模式适配 */
-.dark-theme .header {
-  background: var(--header-background-dark);
-  border-bottom-color: var(--header-border-dark);
-}
-
-/* 深色模式下的导航链接 */
-.dark-theme .header__nav-link {
-  color: var(--color-text);
-}
-
-.dark-theme .header__nav-link:hover {
-  background: var(--color-hover-background-dark);
-}
-
-/* 深色模式下的主题切换按钮 */
-.dark-theme .header__theme-toggle {
-  color: var(--color-text);
-}
-
-.dark-theme .header__theme-toggle:hover {
-  background: var(--color-hover-background-dark);
-}
-
-/* 深色模式下的搜索按钮 */
-.dark-theme .header__search-btn:hover {
-  background: var(--color-hover-background-dark);
 }
 
 /* 响应式布局 */
@@ -706,5 +789,13 @@ onUnmounted(() => {
   .header__mobile-search {
     display: none;
   }
+}
+
+.header__logo:hover .header__logo-text {
+  color: var(--color-primary);
+}
+
+.header__logo:hover .header__logo-tagline {
+  color: var(--color-primary);
 }
 </style>
