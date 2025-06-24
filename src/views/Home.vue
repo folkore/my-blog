@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import { ref, onMounted, onUnmounted, computed, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import { throttle } from "lodash-es";
 import { usePostsStore } from "../store";
@@ -13,9 +13,67 @@ const latestPosts = computed(() => postsStore.posts.slice(0, 3));
 const avatarUrl = ref("");
 const avatarLoaded = ref(false);
 const heroAvatarRef = ref(null);
+const avatarScene = ref(null);
+const particlesContainer = ref(null);
 let observer = null;
+let particlesInstance = null;
+let typingInterval = null;
 
 const techGridRef = ref(null);
+
+const baseUrl = import.meta.env.BASE_URL;
+
+// 技术栈数据
+const techStack = reactive([
+  {
+    name: "Vue.js",
+    icon: "vue.svg",
+    radius: 120,
+    speed: 16,
+    delay: 0,
+    direction: 1,
+  },
+  {
+    name: "React",
+    icon: "react.svg",
+    radius: 160,
+    speed: 20,
+    delay: 2,
+    direction: -1,
+  },
+  {
+    name: "TypeScript",
+    icon: "ts.svg",
+    radius: 200,
+    speed: 24,
+    delay: 4,
+    direction: 1,
+  },
+  {
+    name: "JavaScript",
+    icon: "js.svg",
+    radius: 240,
+    speed: 28,
+    delay: 6,
+    direction: -1,
+  },
+  {
+    name: "CSS",
+    icon: "css.svg",
+    radius: 280,
+    speed: 32,
+    delay: 8,
+    direction: 1,
+  },
+  {
+    name: "HTML",
+    icon: "html.svg",
+    radius: 320,
+    speed: 36,
+    delay: 10,
+    direction: -1,
+  },
+]);
 
 const handleCardMouseMove = (e) => {
   const card = e.currentTarget;
@@ -81,12 +139,151 @@ const handleAvatarMove = throttle((e) => {
   const offsetY = e.clientY - rect.top - rect.height / 2;
   const tiltX = (offsetY / rect.height) * 15; // max 15deg
   const tiltY = (-offsetX / rect.width) * 15;
-  heroAvatarRef.value.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+
+  // 应用更流畅的3D变换
+  heroAvatarRef.value.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+
+  // 添加视差效果 - 头像周围元素的移动幅度更小
+  const rings = heroAvatarRef.value.querySelectorAll(".avatar-ring");
+  rings.forEach((ring, index) => {
+    const factor = 0.7 - index * 0.2; // 不同环有不同的移动系数
+    ring.style.transform = `perspective(1000px) rotateX(${tiltX * factor}deg) rotateY(${tiltY * factor}deg)`;
+  });
 });
 
 const resetAvatarTilt = () => {
   if (heroAvatarRef.value) {
     heroAvatarRef.value.style.transform = "";
+
+    // 重置所有环的变换
+    const rings = heroAvatarRef.value.querySelectorAll(".avatar-ring");
+    rings.forEach((ring) => {
+      ring.style.transform = "";
+    });
+  }
+};
+
+// 粒子背景创建函数
+const createParticlesBackground = () => {
+  if (!particlesContainer.value) return;
+
+  const container = particlesContainer.value;
+  const containerWidth = container.offsetWidth;
+  const containerHeight = container.offsetHeight;
+
+  // 清除现有粒子
+  container.innerHTML = "";
+
+  // 创建新粒子
+  for (let i = 0; i < 50; i++) {
+    const particle = document.createElement("div");
+    particle.classList.add("particle");
+
+    // 随机位置
+    const x = Math.random() * containerWidth;
+    const y = Math.random() * containerHeight;
+
+    // 随机大小
+    const size = Math.random() * 4 + 1;
+
+    // 随机透明度
+    const opacity = Math.random() * 0.5 + 0.1;
+
+    // 随机动画延迟
+    const animationDelay = Math.random() * 5;
+
+    // 随机动画持续时间
+    const animationDuration = Math.random() * 20 + 15;
+
+    // 设置样式
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+    particle.style.left = `${x}px`;
+    particle.style.top = `${y}px`;
+    particle.style.opacity = opacity;
+    particle.style.animationDelay = `${animationDelay}s`;
+    particle.style.animationDuration = `${animationDuration}s`;
+
+    container.appendChild(particle);
+  }
+};
+
+// 打字机效果
+const initTypingEffect = () => {
+  const typingText = document.querySelector(".typing-text");
+  const texts = ["思考者", "探索者", "记录者", "创造者"];
+  let textIndex = 0;
+  let charIndex = 0;
+  let isDeleting = false;
+  let typingSpeed = 100;
+
+  const type = () => {
+    const currentText = texts[textIndex];
+
+    if (isDeleting) {
+      // 删除文字
+      typingText.textContent = currentText.substring(0, charIndex - 1);
+      charIndex--;
+      typingSpeed = 50; // 删除速度更快
+    } else {
+      // 输入文字
+      typingText.textContent = currentText.substring(0, charIndex + 1);
+      charIndex++;
+      typingSpeed = 150; // 输入速度较慢
+    }
+
+    // 如果已完成当前词的输入
+    if (!isDeleting && charIndex === currentText.length) {
+      isDeleting = true;
+      typingSpeed = 1500; // 输入完成后暂停一段时间
+    }
+    // 如果已删除完当前词
+    else if (isDeleting && charIndex === 0) {
+      isDeleting = false;
+      textIndex = (textIndex + 1) % texts.length; // 循环切换文字
+      typingSpeed = 500; // 切换到下一个词之前暂停
+    }
+
+    // 设置下一个字符的输入/删除
+    setTimeout(type, typingSpeed);
+  };
+
+  // 启动打字效果
+  if (typingText) {
+    setTimeout(type, 1000); // 页面加载1秒后开始
+  }
+};
+
+// 滚动指示器效果
+const initScrollIndicator = () => {
+  const scrollIndicator = document.querySelector(".scroll-indicator");
+
+  if (scrollIndicator) {
+    window.addEventListener("scroll", () => {
+      // 当页面滚动超过一定高度时隐藏指示器
+      if (window.scrollY > 100) {
+        scrollIndicator.classList.add("hidden");
+      } else {
+        scrollIndicator.classList.remove("hidden");
+      }
+    });
+
+    // 点击滚动指示器平滑滚动到下一部分
+    scrollIndicator.addEventListener("click", () => {
+      const heroHeight = document.querySelector(".hero").offsetHeight;
+      window.scrollTo({
+        top: heroHeight,
+        behavior: "smooth",
+      });
+    });
+  }
+};
+
+// 初始化3D场景
+const init3DScene = () => {
+  if (avatarScene.value) {
+    // 这里可以添加WebGL或Three.js的初始化代码
+    // 或者使用CSS 3D变换模拟3D效果
   }
 };
 
@@ -137,12 +334,34 @@ onMounted(async () => {
     item.style.transitionDelay = `${index * 100}ms`;
     postObserver.observe(item);
   });
+
+  // 初始化新增功能
+  createParticlesBackground();
+  initTypingEffect();
+  initScrollIndicator();
+  init3DScene();
+
+  // 窗口大小变化时重新计算粒子背景
+  window.addEventListener(
+    "resize",
+    throttle(() => {
+      createParticlesBackground();
+    }, 200)
+  );
 });
 
 onUnmounted(() => {
   // 组件卸载时停止观察，清理资源
   if (observer && heroAvatarRef.value) {
     observer.unobserve(heroAvatarRef.value);
+  }
+
+  // 清理事件监听
+  window.removeEventListener("resize", createParticlesBackground);
+
+  // 清理定时器
+  if (typingInterval) {
+    clearInterval(typingInterval);
   }
 });
 </script>
@@ -152,36 +371,66 @@ onUnmounted(() => {
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-background">
-        <div class="hero-shape-1"></div>
-        <div class="hero-shape-2"></div>
-        <div class="hero-shape-3"></div>
+        <div class="hero-shape hero-shape-1"></div>
+        <div class="hero-shape hero-shape-2"></div>
+        <div class="hero-shape hero-shape-3"></div>
+        <div class="hero-particles" ref="particlesContainer"></div>
       </div>
-      <div class="container">
+      <div class="container hero-container">
         <div class="hero-content">
-          <div
-            class="hero-avatar"
-            :class="{ loading: !avatarLoaded }"
-            ref="heroAvatarRef"
-            @mousemove="handleAvatarMove"
-            @mouseleave="resetAvatarTilt"
-          >
-            <div v-if="!avatarLoaded" class="avatar-placeholder"></div>
-            <img
-              v-if="avatarUrl"
-              :src="avatarUrl"
-              alt="头像"
-              class="avatar-image"
-              :class="{ loaded: avatarLoaded }"
-              @load="avatarLoaded = true"
-            />
+          <div class="hero-headline">
+            <h1
+              class="hero-title glitch-text"
+              data-text="在名为'我'的深海，投下一枚石子。"
+            >
+              在名为'我'的深海，投下一枚石子。
+            </h1>
+            <div class="hero-subtitle">
+              <span class="typing-text"></span>
+              <span class="typing-cursor">|</span>
+            </div>
           </div>
-          <h1 class="hero-title">{{ t("home.hero.title") }}</h1>
-          <p class="hero-description">{{ t("home.hero.description") }}</p>
-          <div class="hero-tags">
-            <span class="hero-tag">Vue.js</span>
-            <span class="hero-tag">React</span>
-            <span class="hero-tag">TypeScript</span>
-            <span class="hero-tag">前端开发</span>
+          <p class="hero-description">
+            你好，岸上的人。我是
+            <span class="brand-name">folklore</span
+            >。<br />我时常潜入名为"自我"的静寂深海，投下一枚名为"思考"的石子，只为观察那荡开的，名为"理解"的涟漪。这里陈列的，便是我拾起的，一些被浪花冲刷上岸的贝壳。<br />若你恰好路过，愿其中一枚，能让你听见海的声音。
+          </p>
+          <div class="hero-buttons">
+            <router-link to="/blog" class="hero-button primary">
+              <span class="button-text">进入博客</span>
+              <span class="button-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </span>
+            </router-link>
+            <router-link to="/about" class="hero-button secondary">
+              <span class="button-text">关于我</span>
+              <span class="button-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+              </span>
+            </router-link>
           </div>
           <div class="hero-social">
             <a
@@ -190,21 +439,22 @@ onUnmounted(() => {
               class="social-link"
               title="GitHub"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
-                ></path>
-              </svg>
+              <span class="social-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+                  ></path>
+                </svg>
+              </span>
+              <span class="social-hover-text">GitHub</span>
             </a>
             <a
               href="https://twitter.com"
@@ -212,21 +462,22 @@ onUnmounted(() => {
               class="social-link"
               title="Twitter"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"
-                ></path>
-              </svg>
+              <span class="social-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"
+                  ></path>
+                </svg>
+              </span>
+              <span class="social-hover-text">Twitter</span>
             </a>
             <a
               href="https://linkedin.com"
@@ -234,47 +485,99 @@ onUnmounted(() => {
               class="social-link"
               title="LinkedIn"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"
-                ></path>
-                <rect x="2" y="9" width="4" height="12"></rect>
-                <circle cx="4" cy="4" r="2"></circle>
-              </svg>
+              <span class="social-icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"
+                  ></path>
+                  <rect x="2" y="9" width="4" height="12"></rect>
+                  <circle cx="4" cy="4" r="2"></circle>
+                </svg>
+              </span>
+              <span class="social-hover-text">LinkedIn</span>
             </a>
           </div>
-          <div class="hero-buttons">
-            <router-link to="/blog" class="hero-button primary">
-              {{ t("home.hero.browseArticles") }}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-              </svg>
-            </router-link>
-            <router-link to="/about" class="hero-button secondary">
-              {{ t("nav.about") }}
-            </router-link>
+        </div>
+
+        <div class="hero-visual">
+          <div class="avatar-scene" ref="avatarScene">
+            <div
+              class="avatar-container"
+              :class="{ loading: !avatarLoaded }"
+              ref="heroAvatarRef"
+              @mousemove="handleAvatarMove"
+              @mouseleave="resetAvatarTilt"
+            >
+              <div class="avatar-ring"></div>
+              <div class="avatar-ring ring-2"></div>
+              <div class="avatar-ring ring-3"></div>
+
+              <div class="avatar-frame">
+                <div v-if="!avatarLoaded" class="avatar-placeholder">
+                  <div class="avatar-loader"></div>
+                </div>
+                <img
+                  v-if="avatarUrl"
+                  :src="avatarUrl"
+                  alt="头像"
+                  class="avatar-image"
+                  :class="{ loaded: avatarLoaded }"
+                  @load="avatarLoaded = true"
+                />
+                <div class="avatar-glow"></div>
+              </div>
+
+              <div class="tech-universe">
+                <div class="tech-galaxy">
+                  <div
+                    v-for="(tech, idx) in techStack"
+                    :key="idx"
+                    class="tech-star"
+                    :style="{
+                      '--orbit-radius': `${tech.radius}px`,
+                      '--orbit-speed': `${tech.speed}s`,
+                      '--orbit-delay': `${tech.delay}s`,
+                      '--orbit-direction': tech.direction,
+                    }"
+                  >
+                    <div class="tech-planet">
+                      <img
+                        :src="`${baseUrl}tech-icons/${tech.icon}`"
+                        :alt="tech.name"
+                      />
+                      <div class="tech-tooltip">{{ tech.name }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
+
+      <div class="scroll-indicator">
+        <div class="scroll-text">向下滚动</div>
+        <div class="scroll-arrow">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <polyline points="19 12 12 19 5 12"></polyline>
+          </svg>
         </div>
       </div>
     </section>
@@ -468,69 +771,606 @@ onUnmounted(() => {
 /* Hero Section */
 .hero {
   position: relative;
-  padding: 8rem 0;
+  padding: 0;
   overflow: hidden;
   background: var(--color-secondary-background);
-  min-height: calc(100vh - 64px);
-  display: flex;
-  align-items: center;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 1;
-  max-width: 800px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.hero-avatar {
-  position: relative;
-  width: 160px;
-  height: 160px;
-  margin: 0 auto 2rem;
-  border-radius: 50%;
-  overflow: visible;
-  background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e9f0ff 100%);
-  animation: avatar-float 6s ease-in-out infinite;
-  transition: transform 0.25s ease-out;
-  will-change: transform;
-}
-
-.avatar-placeholder {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.hero-container {
+  display: flex;
+  align-items: center;
+  gap: 4rem;
+  width: 100%;
   position: relative;
+  z-index: 5;
+}
+
+/* 背景效果 */
+.hero-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.hero-shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+}
+
+.hero-shape-1 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(
+    circle,
+    rgba(var(--color-primary-rgb), 0.3),
+    rgba(var(--color-primary-rgb), 0.1) 60%,
+    transparent 70%
+  );
+  top: -200px;
+  right: -200px;
+}
+
+.hero-shape-2 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(
+    circle,
+    rgba(var(--color-accent-rgb), 0.2),
+    rgba(var(--color-accent-rgb), 0.1) 60%,
+    transparent 70%
+  );
+  bottom: -150px;
+  left: -150px;
+}
+
+.hero-shape-3 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(
+    circle,
+    rgba(var(--color-primary-light-rgb), 0.15),
+    rgba(var(--color-primary-light-rgb), 0.05) 60%,
+    transparent 70%
+  );
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* 粒子效果 */
+.hero-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.particle {
+  position: absolute;
+  background: linear-gradient(
+    180deg,
+    rgba(var(--color-primary-rgb), 0.8),
+    rgba(var(--color-accent-rgb), 0.8)
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  animation: float-particle linear infinite;
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(20px);
+    opacity: 0;
+  }
+}
+
+/* 内容区域 */
+.hero-content {
+  flex: 1 1 55%;
+  position: relative;
+  z-index: 3;
+  text-align: left;
+  max-width: 650px;
+}
+
+.hero-headline {
+  margin-bottom: 2rem;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1.3;
+  margin-bottom: 1rem;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-primary-light) 50%,
+    var(--color-accent) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+  position: relative;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+/* 故障艺术文字效果 */
+.glitch-text {
+  position: relative;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-primary-light) 50%,
+    var(--color-accent) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+
+.glitch-text::before {
+  animation: glitch-animation 3s infinite linear alternate-reverse;
+  left: 2px;
+  text-shadow: -1px 0 rgba(var(--color-primary-rgb), 0.3);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 35%,
+    0 35%,
+    0 45%,
+    100% 45%,
+    100% 85%,
+    0 85%,
+    0 100%,
+    100% 100%
+  );
+}
+
+.glitch-text::after {
+  animation: glitch-animation 2s infinite linear alternate-reverse;
+  left: -2px;
+  text-shadow: 1px 0 rgba(var(--color-accent-rgb), 0.3);
+  clip-path: polygon(
+    0 25%,
+    100% 25%,
+    100% 30%,
+    0 30%,
+    0 50%,
+    100% 50%,
+    100% 70%,
+    0 70%,
+    0 80%,
+    100% 80%
+  );
+}
+
+@keyframes glitch-animation {
+  0% {
+    transform: translate(0);
+  }
+  20% {
+    transform: translate(-1px, 1px);
+  }
+  40% {
+    transform: translate(-1px, -1px);
+  }
+  60% {
+    transform: translate(1px, 1px);
+  }
+  80% {
+    transform: translate(1px, -1px);
+  }
+  100% {
+    transform: translate(0);
+  }
+}
+
+/* 打字机效果区域 */
+.hero-subtitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  color: var(--color-primary-light);
+  margin-top: 0.5rem;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.typing-text {
+  display: inline-block;
+}
+
+.typing-cursor {
+  display: inline-block;
+  margin-left: 2px;
+  animation: cursor-blink 1s infinite;
+}
+
+@keyframes cursor-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.hero-description {
+  font-size: 1.1rem;
+  color: var(--color-secondary-text);
+  margin-bottom: 2.5rem;
+  animation: fadeInUp 0.8s ease-out 0.4s both;
+  line-height: 1.8;
+}
+
+.brand-name {
+  position: relative;
+  color: var(--color-primary);
+  font-weight: 600;
+  display: inline-block;
+  padding: 0 4px;
+}
+
+.brand-name::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(var(--color-primary-rgb), 0.3),
+    rgba(var(--color-accent-rgb), 0.3)
+  );
+  border-radius: 2px;
+}
+
+/* 按钮样式 */
+.hero-buttons {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: flex-start;
+  animation: fadeInUp 0.8s ease-out 0.6s both;
+}
+
+.hero-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.75rem;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-decoration: none;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  overflow: hidden;
+  z-index: 1;
+}
+
+.button-text {
+  position: relative;
+  z-index: 2;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.button-icon {
+  position: relative;
+  z-index: 2;
+  width: 20px;
+  height: 20px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  opacity: 0.8;
+}
+
+.hero-button.primary {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-primary-light) 100%
+  );
+  color: white;
+  box-shadow: 0 10px 20px -10px rgba(var(--color-primary-rgb), 0.5);
+}
+
+.hero-button.primary::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-light) 0%,
+    var(--color-primary) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 1;
+}
+
+.hero-button.primary:hover::before {
+  opacity: 1;
+}
+
+.hero-button.secondary {
+  background: rgba(var(--color-tertiary-background-rgb), 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--color-text);
+  border: 1px solid rgba(var(--color-border-rgb), 0.2);
+}
+
+.hero-button.secondary::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(var(--color-primary-rgb), 0.05);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 1;
+}
+
+.hero-button.secondary:hover::before {
+  opacity: 1;
+}
+
+.hero-button:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px -10px rgba(var(--color-primary-rgb), 0.3);
+}
+
+.hero-button:hover .button-icon {
+  transform: translateX(4px);
+}
+
+/* 社交链接 */
+.hero-social {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: flex-start;
+  margin-top: 3rem;
+  animation: fadeInUp 0.8s ease-out 0.8s both;
+}
+
+.social-link {
+  position: relative;
+  color: var(--color-secondary-text);
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background: rgba(var(--color-tertiary-background-rgb), 0.5);
+  border: 1px solid rgba(var(--color-border-rgb), 0.2);
   overflow: hidden;
 }
 
-.avatar-placeholder::before {
-  content: "";
+.social-icon {
+  position: relative;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.social-hover-text {
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  opacity: 0;
+  transform: translateY(100%);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 1;
+}
+
+.social-link:hover {
+  color: var(--color-primary);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px -5px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.social-link:hover .social-icon {
+  transform: translateY(-120%);
+}
+
+.social-link:hover .social-hover-text {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 视觉区域 */
+.hero-visual {
+  flex: 1 1 45%;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 450px;
+}
+
+.avatar-scene {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1200px;
+}
+
+.avatar-container {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  margin: 0;
+  border-radius: 50%;
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  will-change: transform;
+  transform-style: preserve-3d;
+  animation: avatarFloat 6s ease-in-out infinite;
+}
+
+@keyframes avatarFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.avatar-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(100% + 40px);
+  height: calc(100% + 40px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid rgba(var(--color-primary-rgb), 0.1);
+  box-shadow: 0 0 30px rgba(var(--color-primary-rgb), 0.1);
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d;
+  animation: ringRotate 20s linear infinite;
+}
+
+.ring-2 {
+  width: calc(100% + 80px);
+  height: calc(100% + 80px);
+  border: 2px solid rgba(var(--color-accent-rgb), 0.1);
+  animation-duration: 25s;
+  animation-direction: reverse;
+}
+
+.ring-3 {
+  width: calc(100% + 120px);
+  height: calc(100% + 120px);
+  border: 2px solid rgba(var(--color-primary-light-rgb), 0.1);
+  animation-duration: 30s;
+}
+
+@keyframes ringRotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.avatar-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(var(--color-secondary-background-rgb), 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(var(--color-border-rgb), 0.2);
+  box-shadow:
+    0 20px 50px -20px rgba(var(--color-primary-rgb), 0.4),
+    inset 0 0 30px rgba(var(--color-primary-rgb), 0.1);
+  transform-style: preserve-3d;
+  z-index: 2;
+}
+
+.avatar-placeholder {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
   background: linear-gradient(
-    45deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
+    120deg,
+    var(--color-secondary-background) 30%,
+    rgba(var(--color-primary-rgb), 0.1) 50%,
+    var(--color-secondary-background) 70%
   );
+  background-size: 200% 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   animation: shimmer 1.5s infinite;
+}
+
+.avatar-loader {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 3px solid rgba(var(--color-primary-rgb), 0.1);
+  border-top-color: var(--color-primary);
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes shimmer {
   0% {
-    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    background-position: -100% 0;
   }
   100% {
-    transform: translateX(100%) translateY(100%) rotate(45deg);
+    background-position: 100% 0;
   }
 }
 
@@ -539,200 +1379,219 @@ onUnmounted(() => {
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
-  box-shadow: var(--shadow-lg);
   opacity: 0;
-  transition: opacity 0.6s ease;
+  transition: opacity 0.8s ease;
+  z-index: 2;
 }
 
 .avatar-image.loaded {
   opacity: 1;
 }
 
-.hero-avatar::before {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  background: conic-gradient(
-    rgba(var(--color-primary-rgb), 0.6) 0%,
-    rgba(var(--color-primary-light-rgb), 0.4) 25%,
-    rgba(var(--color-accent-rgb), 0.6) 50%,
-    rgba(var(--color-primary-rgb), 0.6) 100%
-  );
-  mask: radial-gradient(
-    farthest-side,
-    transparent calc(100% - 4px),
-    #000 calc(100% - 4px)
-  );
-  -webkit-mask: radial-gradient(
-    farthest-side,
-    transparent calc(100% - 4px),
-    #000 calc(100% - 4px)
-  );
-  z-index: -1;
-}
-
-@keyframes avatar-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-.hero-title {
-  font-size: 3.5rem;
-  font-weight: 800;
-  line-height: 1.2;
-  margin-bottom: 1.5rem;
-  background: var(--color-primary-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: titleFade 1s ease-out;
-}
-
-.hero-description {
-  font-size: 1.25rem;
-  color: var(--color-secondary-text);
-  margin-bottom: 2rem;
-  animation: fadeUp 1s ease-out 0.2s both;
-}
-
-.hero-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  justify-content: center;
-  margin-bottom: 2rem;
-  animation: fadeUp 1s ease-out 0.4s both;
-}
-
-.hero-tag {
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-full);
-  background: var(--color-tertiary-background);
-  color: var(--color-secondary-text);
-  font-size: 0.875rem;
-  transition: all var(--transition-normal) var(--bezier-bounce);
-}
-
-.hero-tag:hover {
-  transform: translateY(-2px);
-  background: var(--color-primary-gradient);
-  color: white;
-}
-
-.hero-social {
-  display: flex;
-  gap: 1.5rem;
-  justify-content: center;
-  margin-bottom: 2rem;
-  animation: fadeUp 1s ease-out 0.6s both;
-}
-
-.social-link {
-  color: var(--color-secondary-text);
-  transition: all var(--transition-normal) var(--bezier-bounce);
-}
-
-.social-link:hover {
-  color: var(--color-primary);
-  transform: translateY(-2px);
-}
-
-.hero-buttons {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  animation: fadeUp 1s ease-out 0.8s both;
-}
-
-.hero-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-full);
-  font-weight: 500;
-  text-decoration: none;
-  transition: all var(--transition-normal) var(--bezier-bounce);
-}
-
-.hero-button.primary {
-  background: var(--color-primary-gradient);
-  color: white;
-  box-shadow: var(--shadow-md);
-}
-
-.hero-button.secondary {
-  background: var(--color-tertiary-background);
-  color: var(--color-text);
-}
-
-.hero-button:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.hero-button svg {
-  transition: transform var(--transition-normal) var(--bezier-bounce);
-}
-
-.hero-button:hover svg {
-  transform: translateX(4px);
-}
-
-.hero-background {
+.avatar-glow {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden;
-}
-
-.hero-shape-1,
-.hero-shape-2,
-.hero-shape-3 {
-  position: absolute;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
-  filter: blur(var(--blur-lg));
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(var(--color-primary-rgb), 0.3) 0%,
+    transparent 70%
+  );
+  filter: blur(15px);
+  opacity: 0.6;
+  z-index: 1;
+  animation: glowPulse 4s ease-in-out infinite alternate;
 }
 
-.hero-shape-1 {
-  width: 400px;
-  height: 400px;
-  background: var(--color-primary);
-  opacity: 0.1;
-  top: -100px;
-  right: -100px;
+@keyframes glowPulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
 }
 
-.hero-shape-2 {
-  width: 300px;
-  height: 300px;
-  background: var(--color-accent);
-  opacity: 0.1;
-  bottom: -50px;
-  left: -50px;
+/* 技术星系 */
+.tech-universe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  z-index: 3;
 }
 
-.hero-shape-3 {
-  width: 200px;
-  height: 200px;
-  background: var(--color-primary-light);
-  opacity: 0.1;
+.tech-galaxy {
+  position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  animation: galaxyRotate 60s linear infinite;
 }
 
-@keyframes titleFade {
+@keyframes galaxyRotate {
+  0% {
+    transform: translate(-50%, -50%) rotateY(0deg) rotateX(65deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotateY(360deg) rotateX(65deg);
+  }
+}
+
+.tech-star {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-style: preserve-3d;
+  animation: starOrbit linear infinite;
+  animation-duration: var(--orbit-speed);
+  animation-delay: var(--orbit-delay);
+  animation-direction: var(--orbit-direction);
+}
+
+@keyframes starOrbit {
+  0% {
+    transform: rotateY(0deg) translateX(var(--orbit-radius)) rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(360deg) translateX(var(--orbit-radius)) rotateY(-360deg);
+  }
+}
+
+.tech-planet {
+  width: 50px;
+  height: 50px;
+  background: var(--color-secondary-background);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+  transition: all 0.3s ease;
+  animation: planetPulse 3s ease-in-out infinite;
+  animation-delay: calc(var(--orbit-delay) * 0.5s);
+}
+
+.tech-planet img {
+  width: 28px;
+  height: 28px;
+  transition: transform 0.3s ease;
+}
+
+.tech-planet:hover {
+  transform: scale(1.2);
+  box-shadow: 0 10px 25px rgba(var(--color-primary-rgb), 0.3);
+}
+
+.tech-planet:hover img {
+  transform: rotate(20deg);
+}
+
+@keyframes planetPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.tech-tooltip {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(var(--color-secondary-background-rgb), 0.9);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  color: var(--color-text);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.tech-planet:hover .tech-tooltip {
+  opacity: 1;
+  visibility: visible;
+  bottom: -40px;
+}
+
+/* 滚动指示器 */
+.scroll-indicator {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--color-secondary-text);
+  opacity: 0.7;
+  transition: all 0.5s ease;
+  z-index: 10;
+  cursor: pointer;
+  animation:
+    fadeInUp 0.8s ease-out 1.2s both,
+    bounce 2s ease-in-out infinite 2s;
+}
+
+.scroll-indicator.hidden {
+  opacity: 0;
+  transform: translate(-50%, 20px);
+  pointer-events: none;
+}
+
+.scroll-text {
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.scroll-arrow {
+  width: 24px;
+  height: 24px;
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+/* 动画 */
+@keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -740,18 +1599,137 @@ onUnmounted(() => {
   }
 }
 
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .hero-container {
+    gap: 2rem;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.3rem;
+  }
+
+  .avatar-container {
+    width: 280px;
+    height: 280px;
+  }
+
+  .tech-planet {
+    width: 45px;
+    height: 45px;
+  }
+
+  .tech-planet img {
+    width: 24px;
+    height: 24px;
   }
 }
 
-/* Latest Posts Section */
+@media (max-width: 992px) {
+  .hero-container {
+    flex-direction: column;
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+    text-align: center;
+  }
+
+  .hero-content {
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .hero-buttons,
+  .hero-social {
+    justify-content: center;
+  }
+
+  .hero-visual {
+    margin-top: 3rem;
+  }
+
+  .section-title::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.2rem;
+    height: 1.6rem;
+  }
+
+  .hero-description {
+    font-size: 1rem;
+  }
+
+  .avatar-container {
+    width: 240px;
+    height: 240px;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .hero-button {
+    width: 100%;
+  }
+
+  .tech-star {
+    --orbit-radius: calc(var(--orbit-radius) * 0.7);
+  }
+
+  .tech-planet {
+    width: 40px;
+    height: 40px;
+  }
+
+  .tech-planet img {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .hero-container {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .hero-social {
+    gap: 1rem;
+  }
+
+  .social-link {
+    width: 40px;
+    height: 40px;
+  }
+
+  .avatar-container {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+/* 其他原有样式 */
 .latest-posts {
   padding: 6rem 0;
   background-color: var(--color-background);
@@ -1127,24 +2105,49 @@ onUnmounted(() => {
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .posts-grid {
-    column-count: 2;
+  .hero-container {
+    flex-direction: column;
+    text-align: center;
+  }
+  .hero-content {
+    flex-basis: auto;
+    text-align: center;
+  }
+  .hero-visual {
+    flex-basis: auto;
+    margin-top: 3rem;
+  }
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  .hero-buttons,
+  .hero-social {
+    justify-content: center;
   }
 }
 
 @media (max-width: 768px) {
   .hero {
-    padding: 6rem 0;
+    padding: 4rem 0;
   }
   .hero-title {
     font-size: 2.5rem;
   }
   .hero-description {
-    font-size: 1.125rem;
+    font-size: 1rem;
   }
   .hero-avatar {
-    width: 120px;
-    height: 120px;
+    width: 220px;
+    height: 220px;
+  }
+  .tech-planet {
+    --radius: 140px;
+    width: 45px;
+    height: 45px;
+  }
+  .tech-planet img {
+    width: 24px;
+    height: 24px;
   }
   .hero-buttons {
     flex-direction: column;
