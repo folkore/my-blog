@@ -15,6 +15,65 @@ const avatarLoaded = ref(false);
 const heroAvatarRef = ref(null);
 let observer = null;
 
+const techGridRef = ref(null);
+
+const handleCardMouseMove = (e) => {
+  const card = e.currentTarget;
+  const rect = card.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  const centerX = rect.width / 2;
+  const centerY = rect.height / 2;
+
+  const rotateX = ((y - centerY) / centerY) * -10; // Max 10deg
+  const rotateY = ((x - centerX) / centerX) * 10; // Max 10deg
+
+  card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+
+  const icon = card.querySelector(".tech-icon");
+  const text = card.querySelector("h3");
+  const paragraph = card.querySelector("p");
+
+  const moveFactor = 0.08;
+  if (icon)
+    icon.style.transform = `translateX(${(x - centerX) * moveFactor}px) translateY(${
+      (y - centerY) * moveFactor
+    }px) translateZ(20px)`;
+  if (text)
+    text.style.transform = `translateX(${
+      (x - centerX) * (moveFactor * 0.8)
+    }px) translateY(${(y - centerY) * (moveFactor * 0.8)}px) translateZ(15px)`;
+  if (paragraph)
+    paragraph.style.transform = `translateX(${
+      (x - centerX) * (moveFactor * 0.6)
+    }px) translateY(${(y - centerY) * (moveFactor * 0.6)}px) translateZ(10px)`;
+};
+
+const handleCardMouseLeave = (e) => {
+  const card = e.currentTarget;
+  card.style.transform =
+    "perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)";
+
+  const icon = card.querySelector(".tech-icon");
+  const text = card.querySelector("h3");
+  const paragraph = card.querySelector("p");
+
+  if (icon) icon.style.transform = "translateX(0) translateY(0) translateZ(0)";
+  if (text) text.style.transform = "translateX(0) translateY(0) translateZ(0)";
+  if (paragraph)
+    paragraph.style.transform = "translateX(0) translateY(0) translateZ(0)";
+};
+
+const handleLinkMouseMove = (e) => {
+  const link = e.currentTarget;
+  const rect = link.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  link.style.setProperty("--mouse-x", `${x}px`);
+  link.style.setProperty("--mouse-y", `${y}px`);
+};
+
 const handleAvatarMove = throttle((e) => {
   if (!heroAvatarRef.value) return;
   const rect = heroAvatarRef.value.getBoundingClientRect();
@@ -59,6 +118,25 @@ onMounted(async () => {
     );
     observer.observe(heroAvatarRef.value);
   }
+
+  // Post items observer
+  const postItems = document.querySelectorAll(".post-item");
+  const postObserver = new IntersectionObserver(
+    (entries, observer) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.1 }
+  );
+
+  postItems.forEach((item, index) => {
+    item.style.transitionDelay = `${index * 100}ms`;
+    postObserver.observe(item);
+  });
 });
 
 onUnmounted(() => {
@@ -205,35 +283,94 @@ onUnmounted(() => {
     <section class="latest-posts">
       <div class="container">
         <h2 class="section-title">{{ t("home.latestPosts.title") }}</h2>
-        <div class="posts-grid">
-          <article v-for="post in latestPosts" :key="post.id" class="post-card">
-            <div class="post-image">
-              <img v-lazy="post.cover" :alt="post.title" />
-            </div>
-            <div class="post-content">
-              <div class="post-tags">
-                <span
-                  v-for="(tag, index) in post.tags"
-                  :key="index"
-                  class="post-tag"
-                >
-                  {{ tag }}
-                </span>
+        <div class="posts-list">
+          <router-link
+            v-for="post in latestPosts"
+            :key="post.id"
+            :to="`/blog/${post.slug}`"
+            custom
+            v-slot="{ navigate }"
+          >
+            <article class="post-item" @click="navigate" role="link">
+              <div class="post-item-content">
+                <header class="post-item-header">
+                  <h3 class="post-item-title">{{ post.title }}</h3>
+                  <div class="post-tags">
+                    <span
+                      v-for="(tag, index) in post.tags"
+                      :key="index"
+                      class="post-tag"
+                    >
+                      {{ tag }}
+                    </span>
+                  </div>
+                </header>
+                <p class="post-item-excerpt">{{ post.excerpt }}</p>
+                <footer class="post-item-footer">
+                  <span class="post-date">{{ post.date }}</span>
+                  <div class="post-item-arrow">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M5 12H19"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <path
+                        d="M12 5L19 12L12 19"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </div>
+                </footer>
               </div>
-              <h3 class="post-title">{{ post.title }}</h3>
-              <p class="post-excerpt">{{ post.excerpt }}</p>
-              <div class="post-meta">
-                <span class="post-date">{{ post.date }}</span>
-                <router-link :to="`/blog/${post.slug}`" class="post-link">
-                  {{ t("home.latestPosts.readMore") }}
-                </router-link>
+              <div class="post-item-image-wrapper">
+                <div class="post-item-image">
+                  <img v-lazy="post.cover" :alt="post.title" />
+                </div>
               </div>
-            </div>
-          </article>
+            </article>
+          </router-link>
         </div>
         <div class="view-all">
-          <router-link to="/blog" class="view-all-link">
-            {{ t("home.latestPosts.viewAll") }}
+          <router-link
+            to="/blog"
+            class="view-all-link"
+            @mousemove="handleLinkMouseMove"
+          >
+            <span>{{ t("home.latestPosts.viewAll") }}</span>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M5 12H19"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M12 5L19 12L12 19"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
           </router-link>
         </div>
       </div>
@@ -244,7 +381,11 @@ onUnmounted(() => {
       <div class="container">
         <h2 class="section-title">技术栈</h2>
         <div class="tech-grid">
-          <div class="tech-card">
+          <div
+            class="tech-card"
+            @mousemove="handleCardMouseMove"
+            @mouseleave="handleCardMouseLeave"
+          >
             <div class="tech-icon">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -265,7 +406,11 @@ onUnmounted(() => {
             <h3>前端框架</h3>
             <p>Vue.js, React, Solid.js</p>
           </div>
-          <div class="tech-card">
+          <div
+            class="tech-card"
+            @mousemove="handleCardMouseMove"
+            @mouseleave="handleCardMouseLeave"
+          >
             <div class="tech-icon">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -286,7 +431,11 @@ onUnmounted(() => {
             <h3>语言与工具</h3>
             <p>TypeScript, Vite, Webpack</p>
           </div>
-          <div class="tech-card">
+          <div
+            class="tech-card"
+            @mousemove="handleCardMouseMove"
+            @mouseleave="handleCardMouseLeave"
+          >
             <div class="tech-icon">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -605,166 +754,195 @@ onUnmounted(() => {
 /* Latest Posts Section */
 .latest-posts {
   padding: 6rem 0;
+  background-color: var(--color-background);
 }
 
 .section-title {
   font-size: 2rem;
   font-weight: 700;
-  text-align: center;
   margin-bottom: 3rem;
   position: relative;
-  display: inline-block;
-  left: 50%;
-  transform: translateX(-50%);
+  display: block;
+  text-align: left;
 }
 
 .section-title::after {
   content: "";
   position: absolute;
-  bottom: -0.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 50%;
-  height: 2px;
+  bottom: -0.75rem;
+  left: 0;
+  transform: translateX(0);
+  width: 80px;
+  height: 3px;
   background: var(--color-primary-gradient);
 }
 
-.posts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
+.posts-list {
+  display: flex;
+  flex-direction: column;
   margin-bottom: 3rem;
 }
 
-.post-card {
+.post-item {
   display: flex;
-  flex-direction: column;
-  background: var(--color-background);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  transition: all var(--transition-normal) var(--bezier-bounce);
-  border: 1px solid var(--color-border);
-}
-
-.post-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--color-primary);
-}
-
-.post-image {
-  aspect-ratio: 16/9;
-  overflow: hidden;
-}
-
-.post-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform var(--transition-normal) var(--bezier-smooth);
-}
-
-.post-card:hover .post-image img {
-  transform: scale(1.05);
-}
-
-.post-content {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  padding: 1.5rem;
-}
-
-.post-tags {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-}
-
-.post-tag {
-  padding: 0.25rem 0.75rem;
-  background: var(--color-tertiary-background);
-  color: var(--color-secondary-text);
-  border-radius: var(--radius-full);
-  font-size: 0.875rem;
-}
-
-.post-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-  line-height: 1.4;
-}
-
-.post-excerpt {
-  color: var(--color-secondary-text);
-  margin-bottom: 1.5rem;
-  line-height: 1.6;
-}
-
-.post-meta {
-  margin-top: auto;
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding-top: 1rem;
+  gap: 2rem;
+  padding: 2.5rem 1.5rem;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-border);
+  transition:
+    background-color 0.3s ease,
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    opacity 0.5s ease;
+  border-radius: var(--radius-lg);
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.post-item.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.post-item:first-child {
   border-top: 1px solid var(--color-border);
+}
+
+.post-item:hover {
+  background-color: var(--color-secondary-background);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px -10px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.post-item-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.post-item-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.post-item-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--color-text);
+  transition: color 0.3s ease;
+}
+
+.post-item:hover .post-item-title {
+  color: var(--color-primary);
+}
+
+.post-item-excerpt {
+  color: var(--color-secondary-text);
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.post-item-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
 }
 
 .post-date {
   color: var(--color-tertiary-text);
   font-size: 0.875rem;
+  letter-spacing: 0.05em;
 }
 
-.post-link {
-  color: var(--color-primary);
-  text-decoration: none;
+.post-tags {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.post-tag {
+  color: var(--color-secondary-text);
+  font-size: 0.875rem;
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
   font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
 }
 
-.post-link svg {
-  transition: transform var(--transition-normal) var(--bezier-bounce);
+.post-item-image-wrapper {
+  width: 240px;
+  flex-shrink: 0;
 }
 
-.post-link:hover svg {
-  transform: translateX(4px);
+.post-item-image {
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+}
+
+.post-item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s var(--bezier-smooth);
+}
+
+.post-item:hover .post-item-image img {
+  transform: scale(1.05);
+}
+
+.post-item-arrow {
+  color: var(--color-tertiary-text);
+  opacity: 0;
+  transform: translateX(-10px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+.post-item:hover .post-item-arrow {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .view-all {
   text-align: center;
+  margin-top: 3rem;
 }
 
 .view-all-link {
+  --transition-duration: 0.4s;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--color-secondary-text);
+  text-decoration: none;
+  position: relative;
   padding: 0.75rem 1.5rem;
   border-radius: var(--radius-full);
-  font-weight: 500;
-  text-decoration: none;
-  transition: all var(--transition-normal) var(--bezier-bounce);
-  position: relative;
-  overflow: hidden;
-  background: var(--color-primary-gradient);
-  color: white;
-  box-shadow: var(--shadow-md);
+  transition: color var(--transition-duration) ease;
+  background: transparent;
+  z-index: 1;
 }
 
 .view-all-link:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.view-all-link svg {
-  transition: transform var(--transition-normal) var(--bezier-bounce);
-}
-
-.view-all-link:hover svg {
-  transform: translateX(4px);
+  color: var(--color-primary);
 }
 
 .view-all-link::before {
@@ -774,74 +952,177 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(
-    45deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
+  border-radius: inherit;
+  background: radial-gradient(
+    200px circle at var(--mouse-x) var(--mouse-y),
+    rgba(var(--color-primary-rgb), 0.2) 0%,
+    rgba(var(--color-accent-rgb), 0.15) 50%,
+    transparent 80%
   );
-  transform: translateX(-100%);
-  transition: transform 0.6s var(--bezier-smooth);
+  filter: blur(20px);
+  opacity: 0;
+  transition: opacity var(--transition-duration) ease;
+  z-index: -1;
 }
 
 .view-all-link:hover::before {
-  transform: translateX(100%);
+  opacity: 1;
+}
+
+.view-all-link span,
+.view-all-link svg {
+  z-index: 1;
+}
+
+.view-all-link svg {
+  transition: transform var(--transition-duration) ease;
+  margin-left: 0.25rem;
+}
+
+.view-all-link:hover svg {
+  transform: translateX(4px);
 }
 
 /* Tech Stack Section */
 .tech-stack {
-  padding: 6rem 0;
-  background: var(--color-secondary-background);
+  padding: 3.5rem 0;
+  background: var(--color-background);
+  position: relative;
+  overflow: hidden;
+}
+
+.tech-stack::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: radial-gradient(
+    circle at 80% 20%,
+    rgba(var(--color-primary-rgb), 0.05) 0%,
+    transparent 50%
+  );
+  z-index: 0;
+}
+
+.tech-stack .container {
+  position: relative;
+  z-index: 1;
 }
 
 .tech-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
+  gap: 1.25rem;
 }
 
 .tech-card {
-  background: var(--color-background);
-  padding: 2rem;
-  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  border-radius: var(--radius-xl, 16px);
   text-align: center;
-  transition: all var(--transition-normal) var(--bezier-bounce);
-  border: 1px solid var(--color-border);
+  transition:
+    transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    background 0.3s ease,
+    border-color 0.3s ease;
+  position: relative;
+  background: var(--color-secondary-background);
+  border: 1px solid transparent;
+  overflow: hidden;
+  transform-style: preserve-3d;
+}
+
+.tech-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 255, 255, 0.03),
+    transparent 35%
+  );
+  box-shadow: inset 0 0 30px rgba(var(--color-primary-rgb), 0.07);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.tech-card:hover::before {
+  opacity: 1;
 }
 
 .tech-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--color-primary);
+  background: linear-gradient(
+    145deg,
+    var(--color-tertiary-background),
+    var(--color-secondary-background)
+  );
+  box-shadow: 0 20px 40px -15px rgba(var(--color-primary-rgb), 0.15);
+}
+
+.tech-icon,
+.tech-card h3,
+.tech-card p {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
 }
 
 .tech-icon {
   width: 48px;
   height: 48px;
-  margin: 0 auto 1rem;
-  background: var(--color-tertiary-background);
-  border-radius: var(--radius-full);
+  margin: 0 auto 0.75rem;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(var(--color-primary-rgb), 0.1);
   color: var(--color-primary);
-  transition: all var(--transition-normal) var(--bezier-bounce);
+  z-index: 1;
 }
 
 .tech-card:hover .tech-icon {
-  background: var(--color-primary);
-  color: white;
-  transform: scale(1.1);
+  background: rgba(var(--color-primary-rgb), 0.15);
+  box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.2);
+  transform: scale(1.1) rotate(-4deg);
+  color: var(--color-primary-light);
 }
 
 .tech-card h3 {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
+  transition: all 0.4s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.tech-card:hover h3 {
+  background: var(--color-primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .tech-card p {
   color: var(--color-secondary-text);
+  font-size: 0.9rem;
+  position: relative;
+  z-index: 1;
+  transition: color 0.3s ease;
+}
+
+.tech-card:hover p {
+  color: var(--color-text);
+}
+
+@media (max-width: 768px) {
+  .tech-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .tech-card {
+    padding: 1.25rem;
+  }
 }
 
 /* Responsive Design */
@@ -877,6 +1158,18 @@ onUnmounted(() => {
   }
   .tech-grid {
     grid-template-columns: 1fr;
+  }
+  .post-item {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    padding: 1.5rem;
+  }
+  .post-item-content {
+    flex: 1;
+  }
+  .post-item-image-wrapper {
+    width: 100%;
+    margin-bottom: 1.5rem;
   }
 }
 

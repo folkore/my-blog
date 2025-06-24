@@ -6,9 +6,16 @@
   --color-primary-dark: #2563eb;
   --color-primary-gradient: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
   
+  /* RGB Values for rgba usage */
+  --color-primary-rgb: 59, 130, 246;
+  --color-primary-light-rgb: 96, 165, 250;
+  --color-primary-dark-rgb: 37, 99, 235;
+  --color-border-rgb: 226, 232, 240;
+  
   --color-accent: #f59e0b;
   --color-accent-light: #fbbf24;
   --color-accent-dark: #d97706;
+  --color-accent-rgb: 245, 158, 11;
   
   --color-success: #10b981;
   --color-warning: #f59e0b;
@@ -25,6 +32,17 @@
   
   --color-border: #e2e8f0;
   --color-divider: #e2e8f0;
+  
+  /* RGB for transparent colors */
+  --color-background-rgb: 255, 255, 255;
+  --color-secondary-background-rgb: 248, 250, 252;
+  --color-tertiary-background-rgb: 241, 245, 249;
+  --color-border-rgb: 226, 232, 240;
+  
+  /* Neumorphism Colors */
+  --color-neumorphism-highlight: rgba(255, 255, 255, 0.9);
+  --color-neumorphism-shadow: rgba(209, 217, 229, 0.7);
+  --color-neumorphism-deep-shadow: rgba(195, 204, 217, 0.8);
   
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -90,6 +108,23 @@
   
   --color-border: #334155;
   --color-divider: #334155;
+
+  /* RGB for transparent colors */
+  --color-background-rgb: 15, 23, 42;
+  --color-secondary-background-rgb: 30, 41, 59;
+  --color-tertiary-background-rgb: 51, 65, 85;
+  --color-border-rgb: 51, 65, 85;
+  
+  /* Neumorphism Colors */
+  --color-neumorphism-highlight: rgba(42, 58, 80, 0.8);
+  --color-neumorphism-shadow: rgba(18, 30, 44, 0.8);
+  --color-neumorphism-deep-shadow: rgba(12, 20, 29, 0.9);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
 /* Global Styles */
