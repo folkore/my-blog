@@ -130,9 +130,8 @@ onUnmounted(() => {
       <div
         class="progress-bar"
         :style="{
-          [position === 'left' || position === 'right'
-            ? 'height'
-            : 'width']: `${progress}%`,
+          [position === 'left' || position === 'right' ? 'height' : 'width']:
+            `${progress}%`,
         }"
       >
         <div class="progress-glow"></div>
@@ -193,7 +192,8 @@ onUnmounted(() => {
   );
   background-size: 300% 100%;
   animation: shine 4s ease-in-out infinite;
-  box-shadow: 0 0 8px rgba(var(--color-primary-rgb, 51, 133, 255), 0.25),
+  box-shadow:
+    0 0 8px rgba(var(--color-primary-rgb, 51, 133, 255), 0.25),
     0 0 16px rgba(var(--color-accent-rgb, 0, 212, 255), 0.2);
 }
 
@@ -250,7 +250,8 @@ onUnmounted(() => {
     rgba(var(--color-accent-rgb, 0, 212, 255), 1),
     rgba(var(--color-primary-rgb, 51, 133, 255), 0.9)
   );
-  box-shadow: 0 0 10px rgba(var(--color-primary-rgb, 51, 133, 255), 0.5),
+  box-shadow:
+    0 0 10px rgba(var(--color-primary-rgb, 51, 133, 255), 0.5),
     0 0 20px rgba(var(--color-accent-rgb, 0, 212, 255), 0.3),
     0 0 30px rgba(var(--color-primary-rgb, 51, 133, 255), 0.2);
   animation: pulse 2s ease-in-out infinite;
@@ -298,7 +299,9 @@ onUnmounted(() => {
   font-weight: 500;
   pointer-events: none;
   transform: translateX(-50%);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.05),
+    0 1px 3px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(var(--blur-sm, 4px));
   -webkit-backdrop-filter: blur(var(--blur-sm, 4px));
   z-index: var(--z-tooltip, 600);
@@ -345,7 +348,9 @@ onUnmounted(() => {
   .progress-tooltip {
     background: var(--color-glass-background-dark, rgba(0, 0, 0, 0.85));
     color: var(--color-text, #f8fafc);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.3);
+    box-shadow:
+      0 4px 6px rgba(0, 0, 0, 0.2),
+      0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
   .glass .progress-bar {

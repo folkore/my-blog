@@ -1,381 +1,23 @@
-<script setup>
-import { ref, onMounted, onUnmounted, computed, reactive } from "vue";
-import { useI18n } from "vue-i18n";
-import { throttle } from "lodash-es";
-import { usePostsStore } from "../store";
-
-const { t } = useI18n();
-
-// 获取最新文章（取日期倒序前三篇）
-const postsStore = usePostsStore();
-const latestPosts = computed(() => postsStore.posts.slice(0, 3));
-
-const avatarUrl = ref("");
-const avatarLoaded = ref(false);
-const heroAvatarRef = ref(null);
-const avatarScene = ref(null);
-const particlesContainer = ref(null);
-let observer = null;
-let particlesInstance = null;
-let typingInterval = null;
-
-const techGridRef = ref(null);
-
-const baseUrl = import.meta.env.BASE_URL;
-
-// 技术栈数据
-const techStack = reactive([
-  {
-    name: "Vue.js",
-    icon: "vue.svg",
-    radius: 120,
-    speed: 16,
-    delay: 0,
-    direction: 1,
-  },
-  {
-    name: "React",
-    icon: "react.svg",
-    radius: 160,
-    speed: 20,
-    delay: 2,
-    direction: -1,
-  },
-  {
-    name: "TypeScript",
-    icon: "ts.svg",
-    radius: 200,
-    speed: 24,
-    delay: 4,
-    direction: 1,
-  },
-  {
-    name: "JavaScript",
-    icon: "js.svg",
-    radius: 240,
-    speed: 28,
-    delay: 6,
-    direction: -1,
-  },
-  {
-    name: "CSS",
-    icon: "css.svg",
-    radius: 280,
-    speed: 32,
-    delay: 8,
-    direction: 1,
-  },
-  {
-    name: "HTML",
-    icon: "html.svg",
-    radius: 320,
-    speed: 36,
-    delay: 10,
-    direction: -1,
-  },
-]);
-
-const handleCardMouseMove = (e) => {
-  const card = e.currentTarget;
-  const rect = card.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-
-  const centerX = rect.width / 2;
-  const centerY = rect.height / 2;
-
-  const rotateX = ((y - centerY) / centerY) * -10; // Max 10deg
-  const rotateY = ((x - centerX) / centerX) * 10; // Max 10deg
-
-  card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
-
-  const icon = card.querySelector(".tech-icon");
-  const text = card.querySelector("h3");
-  const paragraph = card.querySelector("p");
-
-  const moveFactor = 0.08;
-  if (icon)
-    icon.style.transform = `translateX(${(x - centerX) * moveFactor}px) translateY(${
-      (y - centerY) * moveFactor
-    }px) translateZ(20px)`;
-  if (text)
-    text.style.transform = `translateX(${
-      (x - centerX) * (moveFactor * 0.8)
-    }px) translateY(${(y - centerY) * (moveFactor * 0.8)}px) translateZ(15px)`;
-  if (paragraph)
-    paragraph.style.transform = `translateX(${
-      (x - centerX) * (moveFactor * 0.6)
-    }px) translateY(${(y - centerY) * (moveFactor * 0.6)}px) translateZ(10px)`;
-};
-
-const handleCardMouseLeave = (e) => {
-  const card = e.currentTarget;
-  card.style.transform =
-    "perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)";
-
-  const icon = card.querySelector(".tech-icon");
-  const text = card.querySelector("h3");
-  const paragraph = card.querySelector("p");
-
-  if (icon) icon.style.transform = "translateX(0) translateY(0) translateZ(0)";
-  if (text) text.style.transform = "translateX(0) translateY(0) translateZ(0)";
-  if (paragraph)
-    paragraph.style.transform = "translateX(0) translateY(0) translateZ(0)";
-};
-
-const handleLinkMouseMove = (e) => {
-  const link = e.currentTarget;
-  const rect = link.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  link.style.setProperty("--mouse-x", `${x}px`);
-  link.style.setProperty("--mouse-y", `${y}px`);
-};
-
-const handleAvatarMove = throttle((e) => {
-  if (!heroAvatarRef.value) return;
-  const rect = heroAvatarRef.value.getBoundingClientRect();
-  const offsetX = e.clientX - rect.left - rect.width / 2;
-  const offsetY = e.clientY - rect.top - rect.height / 2;
-  const tiltX = (offsetY / rect.height) * 15; // max 15deg
-  const tiltY = (-offsetX / rect.width) * 15;
-
-  // 应用更流畅的3D变换
-  heroAvatarRef.value.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
-
-  // 添加视差效果 - 头像周围元素的移动幅度更小
-  const rings = heroAvatarRef.value.querySelectorAll(".avatar-ring");
-  rings.forEach((ring, index) => {
-    const factor = 0.7 - index * 0.2; // 不同环有不同的移动系数
-    ring.style.transform = `perspective(1000px) rotateX(${tiltX * factor}deg) rotateY(${tiltY * factor}deg)`;
-  });
-});
-
-const resetAvatarTilt = () => {
-  if (heroAvatarRef.value) {
-    heroAvatarRef.value.style.transform = "";
-
-    // 重置所有环的变换
-    const rings = heroAvatarRef.value.querySelectorAll(".avatar-ring");
-    rings.forEach((ring) => {
-      ring.style.transform = "";
-    });
-  }
-};
-
-// 粒子背景创建函数
-const createParticlesBackground = () => {
-  if (!particlesContainer.value) return;
-
-  const container = particlesContainer.value;
-  const containerWidth = container.offsetWidth;
-  const containerHeight = container.offsetHeight;
-
-  // 清除现有粒子
-  container.innerHTML = "";
-
-  // 创建新粒子
-  for (let i = 0; i < 50; i++) {
-    const particle = document.createElement("div");
-    particle.classList.add("particle");
-
-    // 随机位置
-    const x = Math.random() * containerWidth;
-    const y = Math.random() * containerHeight;
-
-    // 随机大小
-    const size = Math.random() * 4 + 1;
-
-    // 随机透明度
-    const opacity = Math.random() * 0.5 + 0.1;
-
-    // 随机动画延迟
-    const animationDelay = Math.random() * 5;
-
-    // 随机动画持续时间
-    const animationDuration = Math.random() * 20 + 15;
-
-    // 设置样式
-    particle.style.width = `${size}px`;
-    particle.style.height = `${size}px`;
-    particle.style.left = `${x}px`;
-    particle.style.top = `${y}px`;
-    particle.style.opacity = opacity;
-    particle.style.animationDelay = `${animationDelay}s`;
-    particle.style.animationDuration = `${animationDuration}s`;
-
-    container.appendChild(particle);
-  }
-};
-
-// 打字机效果
-const initTypingEffect = () => {
-  const typingText = document.querySelector(".typing-text");
-  const texts = ["思考者", "探索者", "记录者", "创造者"];
-  let textIndex = 0;
-  let charIndex = 0;
-  let isDeleting = false;
-  let typingSpeed = 100;
-
-  const type = () => {
-    const currentText = texts[textIndex];
-
-    if (isDeleting) {
-      // 删除文字
-      typingText.textContent = currentText.substring(0, charIndex - 1);
-      charIndex--;
-      typingSpeed = 50; // 删除速度更快
-    } else {
-      // 输入文字
-      typingText.textContent = currentText.substring(0, charIndex + 1);
-      charIndex++;
-      typingSpeed = 150; // 输入速度较慢
-    }
-
-    // 如果已完成当前词的输入
-    if (!isDeleting && charIndex === currentText.length) {
-      isDeleting = true;
-      typingSpeed = 1500; // 输入完成后暂停一段时间
-    }
-    // 如果已删除完当前词
-    else if (isDeleting && charIndex === 0) {
-      isDeleting = false;
-      textIndex = (textIndex + 1) % texts.length; // 循环切换文字
-      typingSpeed = 500; // 切换到下一个词之前暂停
-    }
-
-    // 设置下一个字符的输入/删除
-    setTimeout(type, typingSpeed);
-  };
-
-  // 启动打字效果
-  if (typingText) {
-    setTimeout(type, 1000); // 页面加载1秒后开始
-  }
-};
-
-// 滚动指示器效果
-const initScrollIndicator = () => {
-  const scrollIndicator = document.querySelector(".scroll-indicator");
-
-  if (scrollIndicator) {
-    window.addEventListener("scroll", () => {
-      // 当页面滚动超过一定高度时隐藏指示器
-      if (window.scrollY > 100) {
-        scrollIndicator.classList.add("hidden");
-      } else {
-        scrollIndicator.classList.remove("hidden");
-      }
-    });
-
-    // 点击滚动指示器平滑滚动到下一部分
-    scrollIndicator.addEventListener("click", () => {
-      const heroHeight = document.querySelector(".hero").offsetHeight;
-      window.scrollTo({
-        top: heroHeight,
-        behavior: "smooth",
-      });
-    });
-  }
-};
-
-// 初始化3D场景
-const init3DScene = () => {
-  if (avatarScene.value) {
-    // 这里可以添加WebGL或Three.js的初始化代码
-    // 或者使用CSS 3D变换模拟3D效果
-  }
-};
-
-onMounted(async () => {
-  try {
-    // 调用 waifu.pics API 获取随机二次元头像
-    const res = await fetch("https://api.waifu.pics/sfw/waifu");
-    const data = await res.json();
-    avatarUrl.value = data.url;
-  } catch (error) {
-    // 如果请求失败，可在控制台查看原因，或回退到占位图
-    console.error("获取动漫头像失败:", error);
-  }
-
-  // IntersectionObserver 逻辑
-  if (heroAvatarRef.value) {
-    observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (heroAvatarRef.value) {
-            // 根据元素是否可见来控制动画的播放状态
-            heroAvatarRef.value.style.animationPlayState = entry.isIntersecting
-              ? "running"
-              : "paused";
-          }
-        });
-      },
-      { threshold: 0.1 } // 可见度达到10%时触发
-    );
-    observer.observe(heroAvatarRef.value);
-  }
-
-  // Post items observer
-  const postItems = document.querySelectorAll(".post-item");
-  const postObserver = new IntersectionObserver(
-    (entries, observer) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("is-visible");
-          observer.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.1 }
-  );
-
-  postItems.forEach((item, index) => {
-    item.style.transitionDelay = `${index * 100}ms`;
-    postObserver.observe(item);
-  });
-
-  // 初始化新增功能
-  createParticlesBackground();
-  initTypingEffect();
-  initScrollIndicator();
-  init3DScene();
-
-  // 窗口大小变化时重新计算粒子背景
-  window.addEventListener(
-    "resize",
-    throttle(() => {
-      createParticlesBackground();
-    }, 200)
-  );
-});
-
-onUnmounted(() => {
-  // 组件卸载时停止观察，清理资源
-  if (observer && heroAvatarRef.value) {
-    observer.unobserve(heroAvatarRef.value);
-  }
-
-  // 清理事件监听
-  window.removeEventListener("resize", createParticlesBackground);
-
-  // 清理定时器
-  if (typingInterval) {
-    clearInterval(typingInterval);
-  }
-});
-</script>
-
 <template>
   <div class="home">
-    <!-- Hero Section -->
-    <section class="hero">
-      <div class="hero-background">
-        <div class="hero-shape hero-shape-1"></div>
-        <div class="hero-shape hero-shape-2"></div>
-        <div class="hero-shape hero-shape-3"></div>
-        <div class="hero-particles" ref="particlesContainer"></div>
-      </div>
+    <section
+      class="hero"
+      ref="containerRef"
+      :style="{
+        '--x': '0px',
+        '--y': '0px',
+      }"
+      :class="{ 'is-sunset': isDarkMode }"
+    >
+      <canvas ref="canvasRef" class="sand-particles" />
+      <div
+        ref="cursorIndicatorRef"
+        class="cursor-indicator"
+        :style="{
+          transform: 'translate3d(var(--x), var(--y), 0)',
+        }"
+      ></div>
+
       <div class="container hero-container">
         <div class="hero-content">
           <div class="hero-headline">
@@ -506,64 +148,9 @@ onUnmounted(() => {
             </a>
           </div>
         </div>
-
-        <div class="hero-visual">
-          <div class="avatar-scene" ref="avatarScene">
-            <div
-              class="avatar-container"
-              :class="{ loading: !avatarLoaded }"
-              ref="heroAvatarRef"
-              @mousemove="handleAvatarMove"
-              @mouseleave="resetAvatarTilt"
-            >
-              <div class="avatar-ring"></div>
-              <div class="avatar-ring ring-2"></div>
-              <div class="avatar-ring ring-3"></div>
-
-              <div class="avatar-frame">
-                <div v-if="!avatarLoaded" class="avatar-placeholder">
-                  <div class="avatar-loader"></div>
-                </div>
-                <img
-                  v-if="avatarUrl"
-                  :src="avatarUrl"
-                  alt="头像"
-                  class="avatar-image"
-                  :class="{ loaded: avatarLoaded }"
-                  @load="avatarLoaded = true"
-                />
-                <div class="avatar-glow"></div>
-              </div>
-
-              <div class="tech-universe">
-                <div class="tech-galaxy">
-                  <div
-                    v-for="(tech, idx) in techStack"
-                    :key="idx"
-                    class="tech-star"
-                    :style="{
-                      '--orbit-radius': `${tech.radius}px`,
-                      '--orbit-speed': `${tech.speed}s`,
-                      '--orbit-delay': `${tech.delay}s`,
-                      '--orbit-direction': tech.direction,
-                    }"
-                  >
-                    <div class="tech-planet">
-                      <img
-                        :src="`${baseUrl}tech-icons/${tech.icon}`"
-                        :alt="tech.name"
-                      />
-                      <div class="tech-tooltip">{{ tech.name }}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <div class="scroll-indicator">
+      <div class="scroll-indicator" role="button">
         <div class="scroll-text">向下滚动</div>
         <div class="scroll-arrow">
           <svg
@@ -763,6 +350,767 @@ onUnmounted(() => {
   </div>
 </template>
 
+<script setup>
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
+import { useI18n } from "vue-i18n";
+import { throttle } from "lodash-es";
+import { createNoise3D } from "simplex-noise";
+import { usePostsStore } from "../store";
+
+const { t } = useI18n();
+
+const postsStore = usePostsStore();
+const latestPosts = computed(() => postsStore.posts.slice(0, 3));
+
+const containerRef = ref(null);
+const canvasRef = ref(null);
+const mouseRef = ref({
+  x: -10,
+  y: 0,
+  lx: 0,
+  ly: 0,
+  sx: 0,
+  sy: 0,
+  v: 0,
+  vs: 0,
+  a: 0,
+  set: false,
+});
+const cursorIndicatorRef = ref(null);
+const isHoveringInteractive = ref(false);
+const rafRef = ref(null);
+const boundingRef = ref(null);
+const particleColor = ref("#64748b"); // Sand particle color
+
+const circles = ref([]);
+const canvasSize = ref({ w: 0, h: 0 });
+const context = ref(null);
+const dpr = typeof window !== "undefined" ? window.devicePixelRatio : 1;
+let typingInterval = null;
+
+let resizeObserver = null;
+
+const isDarkMode = ref(
+  document.documentElement.classList.contains("dark-theme")
+);
+
+// 观察 <html> 元素 class 变化，以便捕捉主题切换
+let htmlClassObserver;
+onMounted(() => {
+  htmlClassObserver = new MutationObserver(() => {
+    isDarkMode.value =
+      document.documentElement.classList.contains("dark-theme");
+  });
+  htmlClassObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+});
+
+onUnmounted(() => {
+  if (htmlClassObserver) htmlClassObserver.disconnect();
+});
+
+const setSize = () => {
+  if (!containerRef.value || !canvasRef.value) return;
+
+  boundingRef.value = containerRef.value.getBoundingClientRect();
+  const { width, height } = boundingRef.value;
+
+  // 验证尺寸是否合理，如果异常则重试
+  if (width < 100 || height < 100) {
+    setTimeout(setSize, 50);
+    return;
+  }
+
+  canvasSize.value.w = width;
+  canvasSize.value.h = height;
+  canvasRef.value.width = width * dpr;
+  canvasRef.value.height = height * dpr;
+  if (context.value) {
+    context.value.scale(dpr, dpr);
+  }
+};
+
+const onMouseMove = (e) => {
+  updateMousePosition(e.clientX, e.clientY);
+};
+
+const onTouchMove = (e) => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  updateMousePosition(touch.clientX, touch.clientY);
+};
+
+const updateMousePosition = (x, y) => {
+  // 确保容器存在，如果 boundingRef 不存在则实时获取
+  if (!containerRef.value) return;
+
+  boundingRef.value = containerRef.value.getBoundingClientRect();
+
+  const mouse = mouseRef.value;
+  mouse.x = x - boundingRef.value.left;
+  mouse.y = y - boundingRef.value.top;
+
+  if (!mouse.set) {
+    mouse.sx = mouse.x;
+    mouse.sy = mouse.y;
+    mouse.lx = mouse.x;
+    mouse.ly = mouse.y;
+    mouse.set = true;
+  }
+
+  // 移除这里的CSS变量更新，统一在tick函数中处理
+};
+
+const initCanvas = () => {
+  resizeCanvas();
+  drawParticles();
+};
+
+const resizeCanvas = () => {
+  if (canvasRef.value && context.value && boundingRef.value) {
+    circles.value.length = 0;
+    const { width, height } = boundingRef.value;
+    canvasSize.value.w = width;
+    canvasSize.value.h = height;
+    canvasRef.value.width = width * dpr;
+    canvasRef.value.height = height * dpr;
+    if (context.value) {
+      context.value.scale(dpr, dpr);
+    }
+  }
+};
+
+const circleParams = () => {
+  const x = Math.floor(Math.random() * canvasSize.value.w);
+  const y = Math.floor(Math.random() * canvasSize.value.h);
+  const translateX = 0;
+  const translateY = 0;
+  const pSize = Math.floor(Math.random() * 1.5) + 0.5;
+  const alpha = 0;
+  const targetAlpha = parseFloat((Math.random() * 0.4 + 0.1).toFixed(1));
+  const dx = (Math.random() - 0.5) * 0.05;
+  const dy = (Math.random() - 0.5) * 0.05;
+  const magnetism = 0.1 + Math.random() * 2;
+  return {
+    x,
+    y,
+    translateX,
+    translateY,
+    size: pSize,
+    alpha,
+    targetAlpha,
+    dx,
+    dy,
+    magnetism,
+  };
+};
+
+const hexToRgb = (hex) => {
+  hex = hex.replace("#", "");
+  const hexInt = parseInt(hex, 16);
+  const red = (hexInt >> 16) & 255;
+  const green = (hexInt >> 8) & 255;
+  const blue = hexInt & 255;
+  return [red, green, blue];
+};
+
+let rgb;
+
+const drawCircle = (circle, update = false) => {
+  if (context.value) {
+    const { x, y, translateX, translateY, size, alpha } = circle;
+    context.value.translate(translateX, translateY);
+    context.value.beginPath();
+    context.value.arc(x, y, size, 0, 2 * Math.PI);
+    context.value.fillStyle = `rgba(${rgb.join(", ")}, ${alpha})`;
+    context.value.fill();
+    context.value.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (!update) {
+      circles.value.push(circle);
+    }
+  }
+};
+
+const clearContext = () => {
+  if (context.value) {
+    context.value.clearRect(0, 0, canvasSize.value.w, canvasSize.value.h);
+  }
+};
+
+const drawParticles = () => {
+  // This function is for initial setup, no need to clear here.
+  const particleCount = 400;
+  for (let i = 0; i < particleCount; i++) {
+    const circle = circleParams();
+    drawCircle(circle);
+  }
+};
+
+const drawStoneCursor = () => {
+  if (isHoveringInteractive.value) return;
+  if (!context.value || !mouseRef.value.set) return;
+
+  const mouse = mouseRef.value;
+  const ctx = context.value;
+
+  ctx.save();
+  ctx.translate(mouse.sx, mouse.sy);
+
+  const scale = 1 + mouse.vs / 200; // Pulsate based on speed
+  ctx.scale(scale, scale);
+
+  ctx.beginPath();
+  ctx.moveTo(0, -12);
+  ctx.bezierCurveTo(10, -15, 12, 0, 0, 12);
+  ctx.bezierCurveTo(-12, 12, -10, -15, 0, -12);
+  ctx.closePath();
+
+  const gradient = ctx.createRadialGradient(0, 0, 2, 0, 0, 12);
+  gradient.addColorStop(0, "rgba(220, 220, 220, 0.7)");
+  gradient.addColorStop(1, "rgba(180, 180, 180, 0.7)");
+
+  ctx.fillStyle = gradient;
+  ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
+  ctx.shadowBlur = 5;
+  ctx.shadowOffsetY = 2;
+
+  ctx.fill();
+  ctx.restore();
+};
+
+const effects = ref([]);
+
+const createWaterSplash = (x, y) => {
+  // Particle splash
+  const particleCount = 30 + Math.floor(Math.random() * 20);
+  for (let i = 0; i < particleCount; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    // Distribute particles outwards, with more energy upwards
+    const speed = Math.random() * 4 + 1.5;
+    const initialVy = -Math.random() * 7 - 2;
+
+    const newEffect = {
+      type: "splashParticle",
+      x,
+      y,
+      dx: Math.cos(angle) * speed * (Math.random() * 0.7 + 0.3),
+      dy: initialVy + Math.sin(angle) * speed * 0.5,
+      gravity: 0.12 + Math.random() * 0.08,
+      size: Math.random() * 1.5 + 1,
+      life: 50 + Math.random() * 40,
+      opacity: 1,
+      initialLife: 0, // Will be set below
+    };
+    newEffect.initialLife = newEffect.life;
+    effects.value.push(newEffect);
+  }
+
+  // Ripple waves
+  const waveCount = 3;
+  for (let i = 0; i < waveCount; i++) {
+    setTimeout(() => {
+      const maxRadius = 80 + Math.random() * 50;
+      effects.value.push({
+        type: "rippleWave",
+        x,
+        y,
+        radius: 10,
+        maxRadius: maxRadius,
+        speed: 0.6 + Math.random() * 0.4,
+        opacity: 0.5,
+        lineWidth: 1.5 + Math.random(),
+        noiseGenerator: createNoise3D(),
+      });
+    }, i * 100); // Stagger the creation of waves
+  }
+};
+
+const createSandSplash = (x, y) => {
+  const splashParticles = 30;
+  for (let i = 0; i < splashParticles; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 3 + 1;
+    const newCircle = circleParams();
+
+    newCircle.x = x;
+    newCircle.y = y;
+    newCircle.dx = Math.cos(angle) * speed * 0.2;
+    newCircle.dy = Math.sin(angle) * speed * 0.2;
+    newCircle.targetAlpha = Math.random() * 0.6 + 0.2;
+    newCircle.magnetism = 0; // Splashed particles shouldn't follow mouse
+
+    circles.value.push(newCircle);
+  }
+};
+
+const onClick = (e) => {
+  if (!boundingRef.value) return;
+
+  const w = canvasSize.value.w;
+  const h = canvasSize.value.h;
+  const x = e.clientX - boundingRef.value.left;
+  const y = e.clientY - boundingRef.value.top;
+
+  // Check if inside sand polygon
+  if (h * x + 0.1 * w * y - 0.55 * w * h <= 0) {
+    createSandSplash(x, y);
+  } else {
+    createWaterSplash(x, y);
+  }
+};
+
+const animateAndDrawEffects = () => {
+  effects.value.forEach((effect, index) => {
+    if (effect.type === "splashParticle") {
+      effect.dy += effect.gravity;
+      effect.x += effect.dx;
+      effect.y += effect.dy;
+      effect.life--;
+
+      effect.opacity = Math.max(0, effect.life / effect.initialLife);
+
+      if (effect.life <= 0) {
+        effects.value.splice(index, 1);
+        return;
+      }
+
+      if (context.value) {
+        const ctx = context.value;
+        ctx.beginPath();
+        ctx.arc(effect.x, effect.y, effect.size, 0, Math.PI * 2);
+        // Use a lighter, more water-like color
+        ctx.fillStyle = `rgba(230, 240, 255, ${effect.opacity * 0.85})`;
+        ctx.fill();
+      }
+    } else if (effect.type === "rippleWave") {
+      effect.radius += effect.speed;
+      if (effect.radius > effect.maxRadius) {
+        effects.value.splice(index, 1);
+        return;
+      }
+
+      if (context.value) {
+        const ctx = context.value;
+        const currentOpacity =
+          effect.opacity * (1 - effect.radius / effect.maxRadius);
+
+        // --- Start of new irregular shape logic ---
+        const points = 64;
+        const noiseAmount = 20; // How much the radius is distorted
+        const noiseSpeed = 0.008;
+        const noiseScale = 0.05;
+
+        ctx.beginPath();
+
+        for (let i = 0; i <= points; i++) {
+          const angle = (i / points) * Math.PI * 2;
+          const noiseVal = effect.noiseGenerator(
+            Math.cos(angle) * noiseScale,
+            Math.sin(angle) * noiseScale,
+            effect.radius * noiseSpeed
+          );
+          const r = effect.radius + noiseVal * noiseAmount;
+          const x = effect.x + r * Math.cos(angle);
+          const y = effect.y + r * Math.sin(angle);
+
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.closePath();
+        // --- End of new irregular shape logic ---
+
+        // This subtle fill creates a "deep interaction" by lighting up the background
+        ctx.fillStyle = `rgba(255, 255, 255, ${currentOpacity * 0.15})`;
+        ctx.fill();
+
+        // The stroke provides a faint edge to the wave
+        ctx.strokeStyle = `rgba(255, 255, 255, ${currentOpacity * 0.3})`;
+        ctx.lineWidth = effect.lineWidth;
+        ctx.stroke();
+      }
+    }
+  });
+};
+
+const animateParticles = () => {
+  // clearContext() is now called in tick() to ensure correct render order.
+  const mouse = mouseRef.value;
+  const ctx = context.value;
+  if (!ctx) return;
+
+  ctx.save();
+
+  // Define the clipping path for sand particles
+  const clipPath = new Path2D();
+  const w = canvasSize.value.w;
+  const h = canvasSize.value.h;
+  clipPath.moveTo(0, 0);
+  clipPath.lineTo(w * 0.55, 0);
+  clipPath.lineTo(w * 0.45, h);
+  clipPath.lineTo(0, h);
+  clipPath.closePath();
+  ctx.clip(clipPath);
+
+  circles.value.forEach((circle, i) => {
+    circle.x += circle.dx;
+    circle.y += circle.dy;
+    circle.translateX +=
+      (mouse.x / (50 / circle.magnetism) - circle.translateX) / 50;
+    circle.translateY +=
+      (mouse.y / (50 / circle.magnetism) - circle.translateY) / 50;
+
+    if (circle.alpha < circle.targetAlpha) {
+      circle.alpha += 0.01;
+    }
+
+    drawCircle(circle, true);
+
+    if (
+      circle.x < -circle.size ||
+      circle.x > canvasSize.value.w + circle.size ||
+      circle.y < -circle.size ||
+      circle.y > canvasSize.value.h + circle.size
+    ) {
+      // Don't replace splashed particles
+      if (circle.magnetism > 0) {
+        circles.value.splice(i, 1);
+        const newCircle = circleParams();
+        drawCircle(newCircle);
+      } else {
+        circles.value.splice(i, 1);
+      }
+    }
+  });
+
+  ctx.restore();
+};
+
+const tick = () => {
+  const mouse = mouseRef.value;
+
+  // 使用更快的跟踪速度，减少延迟
+  mouse.sx += (mouse.x - mouse.sx) * 0.3;
+  mouse.sy += (mouse.y - mouse.sy) * 0.3;
+
+  const dx = mouse.x - mouse.lx;
+  const dy = mouse.y - mouse.ly;
+  const d = Math.hypot(dx, dy);
+
+  mouse.v = d;
+  mouse.vs += (d - mouse.vs) * 0.1;
+  mouse.vs = Math.min(100, mouse.vs);
+
+  mouse.lx = mouse.x;
+  mouse.ly = mouse.y;
+
+  mouse.a = Math.atan2(dy, dx);
+
+  // 更新圆点位置，使用平滑后的位置以获得更流畅的体验
+  if (containerRef.value && mouse.set) {
+    containerRef.value.style.setProperty("--x", `${mouse.sx}px`);
+    containerRef.value.style.setProperty("--y", `${mouse.sy}px`);
+  }
+
+  clearContext();
+  animateParticles();
+  animateAndDrawEffects();
+  drawStoneCursor();
+
+  rafRef.value = requestAnimationFrame(tick);
+};
+
+const handleLinkMouseMove = (e) => {
+  const link = e.currentTarget;
+  const rect = link.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  link.style.setProperty("--mouse-x", `${x}px`);
+  link.style.setProperty("--mouse-y", `${y}px`);
+};
+
+const handleCardMouseMove = (e) => {
+  const card = e.currentTarget;
+  const rect = card.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  const centerX = rect.width / 2;
+  const centerY = rect.height / 2;
+
+  const rotateX = ((y - centerY) / centerY) * -10; // Max 10deg
+  const rotateY = ((x - centerX) / centerX) * 10; // Max 10deg
+
+  card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+
+  const icon = card.querySelector(".tech-icon");
+  const text = card.querySelector("h3");
+  const paragraph = card.querySelector("p");
+
+  const moveFactor = 0.08;
+  if (icon)
+    icon.style.transform = `translateX(${(x - centerX) * moveFactor}px) translateY(${
+      (y - centerY) * moveFactor
+    }px) translateZ(20px)`;
+  if (text)
+    text.style.transform = `translateX(${
+      (x - centerX) * (moveFactor * 0.8)
+    }px) translateY(${(y - centerY) * (moveFactor * 0.8)}px) translateZ(15px)`;
+  if (paragraph)
+    paragraph.style.transform = `translateX(${
+      (x - centerX) * (moveFactor * 0.6)
+    }px) translateY(${(y - centerY) * (moveFactor * 0.6)}px) translateZ(10px)`;
+};
+
+const handleCardMouseLeave = (e) => {
+  const card = e.currentTarget;
+  card.style.transform =
+    "perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)";
+
+  const icon = card.querySelector(".tech-icon");
+  const text = card.querySelector("h3");
+  const paragraph = card.querySelector("p");
+
+  if (icon) icon.style.transform = "translateX(0) translateY(0) translateZ(0)";
+  if (text) text.style.transform = "translateX(0) translateY(0) translateZ(0)";
+  if (paragraph)
+    paragraph.style.transform = "translateX(0) translateY(0) translateZ(0)";
+};
+
+// 存储 throttled 函数的引用以便清理
+let throttledMouseMove = null;
+
+onMounted(() => {
+  // 立即添加鼠标事件监听器，不等待 canvas 初始化
+  const setupMouseListeners = () => {
+    if (containerRef.value && !throttledMouseMove) {
+      throttledMouseMove = throttle(onMouseMove, 16);
+      window.addEventListener("mousemove", throttledMouseMove);
+      containerRef.value.addEventListener("touchmove", onTouchMove, {
+        passive: false,
+      });
+      containerRef.value.addEventListener("click", onClick);
+    }
+  };
+
+  // 设置交互元素的悬停事件
+  const setupInteractiveElements = () => {
+    if (!containerRef.value) return;
+
+    const interactiveElements = containerRef.value.querySelectorAll(
+      'a, button, [role="button"], .scroll-indicator'
+    );
+
+    interactiveElements.forEach((element) => {
+      element.addEventListener("mouseenter", () => {
+        isHoveringInteractive.value = true;
+        if (cursorIndicatorRef.value) {
+          cursorIndicatorRef.value.style.opacity = "0";
+        }
+      });
+
+      element.addEventListener("mouseleave", () => {
+        isHoveringInteractive.value = false;
+        if (cursorIndicatorRef.value) {
+          cursorIndicatorRef.value.style.opacity = "1";
+        }
+      });
+    });
+  };
+
+  // 使用更可靠的初始化方法，确保布局完全稳定
+  const initializeCanvas = () => {
+    if (!containerRef.value || !canvasRef.value) {
+      setTimeout(initializeCanvas, 50);
+      return;
+    }
+
+    // 检查容器是否有合理的尺寸
+    const rect = containerRef.value.getBoundingClientRect();
+    if (rect.width < 100 || rect.height < 100) {
+      setTimeout(initializeCanvas, 50);
+      return;
+    }
+
+    context.value = canvasRef.value.getContext("2d");
+    rgb = hexToRgb(particleColor.value);
+
+    // 确保之前的ResizeObserver已经清理
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+      resizeObserver = null;
+    }
+
+    resizeObserver = new ResizeObserver(() => {
+      // 添加防抖，避免频繁触发
+      if (resizeObserver && resizeObserver.timeout) {
+        clearTimeout(resizeObserver.timeout);
+      }
+      if (resizeObserver) {
+        resizeObserver.timeout = setTimeout(() => {
+          if (containerRef.value && canvasRef.value) {
+            setSize();
+            initCanvas();
+          }
+        }, 100);
+      }
+    });
+
+    if (containerRef.value) {
+      resizeObserver.observe(containerRef.value);
+    }
+
+    setSize();
+    initCanvas();
+    setupInteractiveElements(); // 设置交互元素事件
+    rafRef.value = requestAnimationFrame(tick);
+  };
+
+  // 立即设置鼠标监听器
+  requestAnimationFrame(() => {
+    setupMouseListeners();
+    // 延迟初始化 canvas
+    setTimeout(initializeCanvas, 100);
+  });
+
+  const postItems = document.querySelectorAll(".post-item");
+  const postObserver = new IntersectionObserver(
+    (entries, observer) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.1 }
+  );
+
+  postItems.forEach((item, index) => {
+    item.style.transitionDelay = `${index * 100}ms`;
+    postObserver.observe(item);
+  });
+
+  initTypingEffect();
+  initScrollIndicator();
+});
+
+onUnmounted(() => {
+  // 清理动画循环
+  if (rafRef.value) {
+    cancelAnimationFrame(rafRef.value);
+    rafRef.value = null;
+  }
+
+  // 清理ResizeObserver
+  if (resizeObserver) {
+    if (containerRef.value) {
+      resizeObserver.unobserve(containerRef.value);
+    }
+    resizeObserver.disconnect();
+    resizeObserver = null;
+  }
+
+  // 清理鼠标事件监听器
+  if (throttledMouseMove) {
+    window.removeEventListener("mousemove", throttledMouseMove);
+    throttledMouseMove = null;
+  }
+
+  // 清理容器事件监听器
+  if (containerRef.value) {
+    containerRef.value.removeEventListener("touchmove", onTouchMove);
+    containerRef.value.removeEventListener("click", onClick);
+  }
+
+  // 清理定时器
+  if (typingInterval) {
+    clearInterval(typingInterval);
+    typingInterval = null;
+  }
+
+  // 清理滚动监听器（如果存在）
+  window.removeEventListener("scroll", () => {});
+});
+
+// 打字机效果
+const initTypingEffect = () => {
+  const typingText = document.querySelector(".typing-text");
+  const texts = ["思考者", "探索者", "记录者", "创造者"];
+  let textIndex = 0;
+  let charIndex = 0;
+  let isDeleting = false;
+  let typingSpeed = 100;
+
+  const type = () => {
+    const currentText = texts[textIndex];
+
+    if (isDeleting) {
+      typingText.textContent = currentText.substring(0, charIndex - 1);
+      charIndex--;
+      typingSpeed = 50;
+    } else {
+      typingText.textContent = currentText.substring(0, charIndex + 1);
+      charIndex++;
+      typingSpeed = 150;
+    }
+
+    if (!isDeleting && charIndex === currentText.length) {
+      isDeleting = true;
+      typingSpeed = 1500;
+    } else if (isDeleting && charIndex === 0) {
+      isDeleting = false;
+      textIndex = (textIndex + 1) % texts.length;
+      typingSpeed = 500;
+    }
+
+    typingInterval = setTimeout(type, typingSpeed);
+  };
+
+  if (typingText) {
+    typingInterval = setTimeout(type, 1000);
+  }
+};
+
+// 滚动指示器效果
+const initScrollIndicator = () => {
+  const scrollIndicator = document.querySelector(".scroll-indicator");
+
+  if (scrollIndicator) {
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 100) {
+        scrollIndicator.classList.add("hidden");
+      } else {
+        scrollIndicator.classList.remove("hidden");
+      }
+    });
+
+    scrollIndicator.addEventListener("click", () => {
+      const heroHeight = document.querySelector(".hero").offsetHeight;
+      window.scrollTo({
+        top: heroHeight,
+        behavior: "smooth",
+      });
+    });
+  }
+};
+
+// 根据深浅模式切换粒子颜色，并立即生效
+watch(
+  isDarkMode,
+  (val) => {
+    particleColor.value = val ? "#B08C3C" : "#64748b";
+    rgb = hexToRgb(particleColor.value);
+  },
+  { immediate: true }
+);
+</script>
+
 <style scoped>
 .home {
   min-height: 100vh;
@@ -773,11 +1121,38 @@ onUnmounted(() => {
   position: relative;
   padding: 0;
   overflow: hidden;
-  background: var(--color-secondary-background);
-  min-height: 100vh;
+  height: 100vh;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(
+    135deg,
+    #e8e2d6 0%,
+    #d4c8b0 25%,
+    #3f88c5 50%,
+    #2c5d8a 75%,
+    #1a3852 100%
+  );
+  cursor: none; /* 隐藏默认鼠标指针 */
+  /* 突破父容器宽度限制，避免横向滚动条 */
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  width: 100vw;
+  max-width: none;
+  transition: background 2s ease-in-out;
+}
+
+.hero.is-sunset {
+  background: linear-gradient(
+    135deg,
+    #1e253a 0%,
+    #24334a 20%,
+    #3b3f63 40%,
+    #684b71 60%,
+    #a57055 80%,
+    #c8a273 100%
+  );
 }
 
 .hero-container {
@@ -789,104 +1164,7 @@ onUnmounted(() => {
   z-index: 5;
 }
 
-/* 背景效果 */
-.hero-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden;
-  z-index: 1;
-}
-
-.hero-shape {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-}
-
-.hero-shape-1 {
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(
-    circle,
-    rgba(var(--color-primary-rgb), 0.3),
-    rgba(var(--color-primary-rgb), 0.1) 60%,
-    transparent 70%
-  );
-  top: -200px;
-  right: -200px;
-}
-
-.hero-shape-2 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(
-    circle,
-    rgba(var(--color-accent-rgb), 0.2),
-    rgba(var(--color-accent-rgb), 0.1) 60%,
-    transparent 70%
-  );
-  bottom: -150px;
-  left: -150px;
-}
-
-.hero-shape-3 {
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(
-    circle,
-    rgba(var(--color-primary-light-rgb), 0.15),
-    rgba(var(--color-primary-light-rgb), 0.05) 60%,
-    transparent 70%
-  );
-  top: 40%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-/* 粒子效果 */
-.hero-particles {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  z-index: 2;
-}
-
-.particle {
-  position: absolute;
-  background: linear-gradient(
-    180deg,
-    rgba(var(--color-primary-rgb), 0.8),
-    rgba(var(--color-accent-rgb), 0.8)
-  );
-  border-radius: 50%;
-  pointer-events: none;
-  animation: float-particle linear infinite;
-}
-
-@keyframes float-particle {
-  0% {
-    transform: translateY(0) translateX(0);
-    opacity: 0;
-  }
-  25% {
-    opacity: 1;
-  }
-  75% {
-    opacity: 0.5;
-  }
-  100% {
-    transform: translateY(-100vh) translateX(20px);
-    opacity: 0;
-  }
-}
-
-/* 内容区域 */
+/* Content Area */
 .hero-content {
   flex: 1 1 55%;
   position: relative;
@@ -917,12 +1195,9 @@ onUnmounted(() => {
   position: relative;
   animation: fadeInUp 0.8s ease-out;
 }
-
-/* 故障艺术文字效果 */
 .glitch-text {
   position: relative;
 }
-
 .glitch-text::before,
 .glitch-text::after {
   content: attr(data-text);
@@ -978,7 +1253,6 @@ onUnmounted(() => {
     100% 80%
   );
 }
-
 @keyframes glitch-animation {
   0% {
     transform: translate(0);
@@ -1000,7 +1274,6 @@ onUnmounted(() => {
   }
 }
 
-/* 打字机效果区域 */
 .hero-subtitle {
   font-size: 1.5rem;
   font-weight: 600;
@@ -1015,7 +1288,6 @@ onUnmounted(() => {
 .typing-text {
   display: inline-block;
 }
-
 .typing-cursor {
   display: inline-block;
   margin-left: 2px;
@@ -1047,7 +1319,6 @@ onUnmounted(() => {
   display: inline-block;
   padding: 0 4px;
 }
-
 .brand-name::after {
   content: "";
   position: absolute;
@@ -1063,14 +1334,12 @@ onUnmounted(() => {
   border-radius: 2px;
 }
 
-/* 按钮样式 */
 .hero-buttons {
   display: flex;
   gap: 1.5rem;
   justify-content: flex-start;
   animation: fadeInUp 0.8s ease-out 0.6s both;
 }
-
 .hero-button {
   position: relative;
   display: inline-flex;
@@ -1086,13 +1355,11 @@ onUnmounted(() => {
   overflow: hidden;
   z-index: 1;
 }
-
 .button-text {
   position: relative;
   z-index: 2;
   transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-
 .button-icon {
   position: relative;
   z-index: 2;
@@ -1101,7 +1368,6 @@ onUnmounted(() => {
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   opacity: 0.8;
 }
-
 .hero-button.primary {
   background: linear-gradient(
     135deg,
@@ -1111,7 +1377,6 @@ onUnmounted(() => {
   color: white;
   box-shadow: 0 10px 20px -10px rgba(var(--color-primary-rgb), 0.5);
 }
-
 .hero-button.primary::before {
   content: "";
   position: absolute;
@@ -1128,11 +1393,9 @@ onUnmounted(() => {
   transition: opacity 0.4s ease;
   z-index: 1;
 }
-
 .hero-button.primary:hover::before {
   opacity: 1;
 }
-
 .hero-button.secondary {
   background: rgba(var(--color-tertiary-background-rgb), 0.5);
   backdrop-filter: blur(10px);
@@ -1140,7 +1403,6 @@ onUnmounted(() => {
   color: var(--color-text);
   border: 1px solid rgba(var(--color-border-rgb), 0.2);
 }
-
 .hero-button.secondary::before {
   content: "";
   position: absolute;
@@ -1153,21 +1415,17 @@ onUnmounted(() => {
   transition: opacity 0.4s ease;
   z-index: 1;
 }
-
 .hero-button.secondary:hover::before {
   opacity: 1;
 }
-
 .hero-button:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 30px -10px rgba(var(--color-primary-rgb), 0.3);
 }
-
 .hero-button:hover .button-icon {
   transform: translateX(4px);
 }
 
-/* 社交链接 */
 .hero-social {
   display: flex;
   gap: 1.5rem;
@@ -1175,7 +1433,6 @@ onUnmounted(() => {
   margin-top: 3rem;
   animation: fadeInUp 0.8s ease-out 0.8s both;
 }
-
 .social-link {
   position: relative;
   color: var(--color-secondary-text);
@@ -1190,7 +1447,6 @@ onUnmounted(() => {
   border: 1px solid rgba(var(--color-border-rgb), 0.2);
   overflow: hidden;
 }
-
 .social-icon {
   position: relative;
   z-index: 2;
@@ -1198,7 +1454,6 @@ onUnmounted(() => {
   height: 24px;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-
 .social-hover-text {
   position: absolute;
   top: 0;
@@ -1216,326 +1471,57 @@ onUnmounted(() => {
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   z-index: 1;
 }
-
 .social-link:hover {
   color: var(--color-primary);
   transform: translateY(-5px);
   box-shadow: 0 10px 20px -5px rgba(var(--color-primary-rgb), 0.2);
 }
-
 .social-link:hover .social-icon {
   transform: translateY(-120%);
 }
-
 .social-link:hover .social-hover-text {
   opacity: 1;
   transform: translateY(0);
 }
 
-/* 视觉区域 */
-.hero-visual {
-  flex: 1 1 45%;
-  position: relative;
-  z-index: 3;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 450px;
-}
-
-.avatar-scene {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  perspective: 1200px;
-}
-
-.avatar-container {
-  position: relative;
-  width: 320px;
-  height: 320px;
-  margin: 0;
-  border-radius: 50%;
-  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  will-change: transform;
-  transform-style: preserve-3d;
-  animation: avatarFloat 6s ease-in-out infinite;
-}
-
-@keyframes avatarFloat {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
-}
-
-.avatar-ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: calc(100% + 40px);
-  height: calc(100% + 40px);
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  border: 2px solid rgba(var(--color-primary-rgb), 0.1);
-  box-shadow: 0 0 30px rgba(var(--color-primary-rgb), 0.1);
-  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  transform-style: preserve-3d;
-  animation: ringRotate 20s linear infinite;
-}
-
-.ring-2 {
-  width: calc(100% + 80px);
-  height: calc(100% + 80px);
-  border: 2px solid rgba(var(--color-accent-rgb), 0.1);
-  animation-duration: 25s;
-  animation-direction: reverse;
-}
-
-.ring-3 {
-  width: calc(100% + 120px);
-  height: calc(100% + 120px);
-  border: 2px solid rgba(var(--color-primary-light-rgb), 0.1);
-  animation-duration: 30s;
-}
-
-@keyframes ringRotate {
-  from {
-    transform: translate(-50%, -50%) rotate(0deg);
-  }
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
-}
-
-.avatar-frame {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  overflow: hidden;
-  background: rgba(var(--color-secondary-background-rgb), 0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 2px solid rgba(var(--color-border-rgb), 0.2);
-  box-shadow:
-    0 20px 50px -20px rgba(var(--color-primary-rgb), 0.4),
-    inset 0 0 30px rgba(var(--color-primary-rgb), 0.1);
-  transform-style: preserve-3d;
-  z-index: 2;
-}
-
-.avatar-placeholder {
+/* The new animated background styles */
+.sand-particles {
   position: absolute;
   inset: 0;
-  border-radius: 50%;
-  background: linear-gradient(
-    120deg,
-    var(--color-secondary-background) 30%,
-    rgba(var(--color-primary-rgb), 0.1) 50%,
-    var(--color-secondary-background) 70%
-  );
-  background-size: 200% 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: shimmer 1.5s infinite;
-}
-
-.avatar-loader {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  border: 3px solid rgba(var(--color-primary-rgb), 0.1);
-  border-top-color: var(--color-primary);
-  animation: spin 1s infinite linear;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -100% 0;
-  }
-  100% {
-    background-position: 100% 0;
-  }
-}
-
-.avatar-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity 0.8s ease;
-  z-index: 2;
-}
-
-.avatar-image.loaded {
-  opacity: 1;
-}
-
-.avatar-glow {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 30% 30%,
-    rgba(var(--color-primary-rgb), 0.3) 0%,
-    transparent 70%
-  );
-  filter: blur(15px);
-  opacity: 0.6;
   z-index: 1;
-  animation: glowPulse 4s ease-in-out infinite alternate;
+  /* clip-path is now handled programmatically in animateParticles() */
 }
 
-@keyframes glowPulse {
-  0%,
-  100% {
-    opacity: 0.4;
-    transform: scale(0.95);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(1.05);
-  }
-}
-
-/* 技术星系 */
-.tech-universe {
+.cursor-indicator {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  z-index: 3;
-}
-
-.tech-galaxy {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  transform-style: preserve-3d;
-  animation: galaxyRotate 60s linear infinite;
-}
-
-@keyframes galaxyRotate {
-  0% {
-    transform: translate(-50%, -50%) rotateY(0deg) rotateX(65deg);
-  }
-  100% {
-    transform: translate(-50%, -50%) rotateY(360deg) rotateX(65deg);
-  }
-}
-
-.tech-star {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform-style: preserve-3d;
-  animation: starOrbit linear infinite;
-  animation-duration: var(--orbit-speed);
-  animation-delay: var(--orbit-delay);
-  animation-direction: var(--orbit-direction);
-}
-
-@keyframes starOrbit {
-  0% {
-    transform: rotateY(0deg) translateX(var(--orbit-radius)) rotateY(0deg);
-  }
-  100% {
-    transform: rotateY(360deg) translateX(var(--orbit-radius)) rotateY(-360deg);
-  }
-}
-
-.tech-planet {
-  width: 50px;
-  height: 50px;
-  background: var(--color-secondary-background);
+  z-index: 5;
+  width: 1rem;
+  height: 1rem;
+  margin-left: -0.5rem;
+  margin-top: -0.5rem;
+  background: rgba(255, 255, 255, 0.6);
   border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-  position: relative;
-  transition: all 0.3s ease;
-  animation: planetPulse 3s ease-in-out infinite;
-  animation-delay: calc(var(--orbit-delay) * 0.5s);
-}
-
-.tech-planet img {
-  width: 28px;
-  height: 28px;
-  transition: transform 0.3s ease;
-}
-
-.tech-planet:hover {
-  transform: scale(1.2);
-  box-shadow: 0 10px 25px rgba(var(--color-primary-rgb), 0.3);
-}
-
-.tech-planet:hover img {
-  transform: rotate(20deg);
-}
-
-@keyframes planetPulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-}
-
-.tech-tooltip {
-  position: absolute;
-  bottom: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(var(--color-secondary-background-rgb), 0.9);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  white-space: nowrap;
-  color: var(--color-text);
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  z-index: 10;
   pointer-events: none;
+  will-change: transform;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(2px);
+  transition: opacity 0.2s ease;
+  display: none !important;
 }
 
-.tech-planet:hover .tech-tooltip {
-  opacity: 1;
-  visibility: visible;
-  bottom: -40px;
+/* 在可交互元素上恢复默认鼠标指针 */
+.hero a,
+.hero button,
+.hero [role="button"],
+.hero .scroll-indicator {
+  cursor: pointer !important;
 }
 
-/* 滚动指示器 */
+/* Scroll Indicator */
 .scroll-indicator {
   position: absolute;
   bottom: 40px;
@@ -1587,7 +1573,6 @@ onUnmounted(() => {
   }
 }
 
-/* 动画 */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -1599,36 +1584,7 @@ onUnmounted(() => {
   }
 }
 
-/* 响应式设计 */
-@media (max-width: 1200px) {
-  .hero-container {
-    gap: 2rem;
-  }
-
-  .hero-title {
-    font-size: 2.5rem;
-  }
-
-  .hero-subtitle {
-    font-size: 1.3rem;
-  }
-
-  .avatar-container {
-    width: 280px;
-    height: 280px;
-  }
-
-  .tech-planet {
-    width: 45px;
-    height: 45px;
-  }
-
-  .tech-planet img {
-    width: 24px;
-    height: 24px;
-  }
-}
-
+/* Responsive Design Adjustments */
 @media (max-width: 992px) {
   .hero-container {
     flex-direction: column;
@@ -1636,24 +1592,13 @@ onUnmounted(() => {
     padding-bottom: 5rem;
     text-align: center;
   }
-
   .hero-content {
     max-width: 100%;
     text-align: center;
   }
-
   .hero-buttons,
   .hero-social {
     justify-content: center;
-  }
-
-  .hero-visual {
-    margin-top: 3rem;
-  }
-
-  .section-title::after {
-    left: 50%;
-    transform: translateX(-50%);
   }
 }
 
@@ -1661,42 +1606,19 @@ onUnmounted(() => {
   .hero-title {
     font-size: 2.2rem;
   }
-
   .hero-subtitle {
     font-size: 1.2rem;
     height: 1.6rem;
   }
-
   .hero-description {
     font-size: 1rem;
   }
-
-  .avatar-container {
-    width: 240px;
-    height: 240px;
-  }
-
   .hero-buttons {
     flex-direction: column;
     gap: 1rem;
   }
-
   .hero-button {
     width: 100%;
-  }
-
-  .tech-star {
-    --orbit-radius: calc(var(--orbit-radius) * 0.7);
-  }
-
-  .tech-planet {
-    width: 40px;
-    height: 40px;
-  }
-
-  .tech-planet img {
-    width: 20px;
-    height: 20px;
   }
 }
 
@@ -1705,31 +1627,22 @@ onUnmounted(() => {
     padding-top: 3rem;
     padding-bottom: 3rem;
   }
-
   .hero-title {
     font-size: 2rem;
   }
-
   .hero-subtitle {
     font-size: 1.1rem;
   }
-
   .hero-social {
     gap: 1rem;
   }
-
   .social-link {
     width: 40px;
     height: 40px;
   }
-
-  .avatar-container {
-    width: 200px;
-    height: 200px;
-  }
 }
 
-/* 其他原有样式 */
+/* Latest Posts Section (and below) styles remain unchanged */
 .latest-posts {
   padding: 6rem 0;
   background-color: var(--color-background);
@@ -2101,129 +2014,5 @@ onUnmounted(() => {
   .tech-card {
     padding: 1.25rem;
   }
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .hero-container {
-    flex-direction: column;
-    text-align: center;
-  }
-  .hero-content {
-    flex-basis: auto;
-    text-align: center;
-  }
-  .hero-visual {
-    flex-basis: auto;
-    margin-top: 3rem;
-  }
-  .hero-title {
-    font-size: 2.5rem;
-  }
-  .hero-buttons,
-  .hero-social {
-    justify-content: center;
-  }
-}
-
-@media (max-width: 768px) {
-  .hero {
-    padding: 4rem 0;
-  }
-  .hero-title {
-    font-size: 2.5rem;
-  }
-  .hero-description {
-    font-size: 1rem;
-  }
-  .hero-avatar {
-    width: 220px;
-    height: 220px;
-  }
-  .tech-planet {
-    --radius: 140px;
-    width: 45px;
-    height: 45px;
-  }
-  .tech-planet img {
-    width: 24px;
-    height: 24px;
-  }
-  .hero-buttons {
-    flex-direction: column;
-  }
-  .hero-button {
-    width: 100%;
-    justify-content: center;
-  }
-  .posts-grid {
-    grid-template-columns: 1fr;
-  }
-  .tech-grid {
-    grid-template-columns: 1fr;
-  }
-  .post-item {
-    flex-direction: column-reverse;
-    align-items: stretch;
-    padding: 1.5rem;
-  }
-  .post-item-content {
-    flex: 1;
-  }
-  .post-item-image-wrapper {
-    width: 100%;
-    margin-bottom: 1.5rem;
-  }
-}
-
-.avatar-placeholder {
-  position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  background: linear-gradient(115deg, #f5f7ff 25%, #eef2ff 40%, #f5f7ff 65%);
-  background-size: 200% 100%;
-  animation: placeholder-shimmer 2.4s linear infinite;
-  filter: blur(0.2px);
-}
-
-@keyframes placeholder-shimmer {
-  0% {
-    background-position: 180% 0;
-  }
-  100% {
-    background-position: -180% 0;
-  }
-}
-
-.hero-avatar.loading::after {
-  content: "";
-  position: absolute;
-  inset: -14px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(0, 136, 255, 0.4) 0%,
-    transparent 70%
-  );
-  filter: blur(12px);
-  opacity: 0.4;
-  animation: glow-pulse 4s ease-in-out infinite;
-  z-index: -3;
-}
-
-@keyframes glow-pulse {
-  0%,
-  100% {
-    transform: scale(0.85);
-    opacity: 0.2;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.5;
-  }
-}
-
-.hero-avatar:hover {
-  /* animation-play-state: paused; */ /* 性能优化：移除此规则，让鼠标悬停和浮动动画更自然地结合 */
 }
 </style>

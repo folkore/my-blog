@@ -305,7 +305,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: var(--header-height);
-  background: var(--header-background);
+  background: transparent;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--header-border);
@@ -562,7 +562,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: var(--color-secondary-background);
+  background: transparent;
   border: none;
   border-radius: 8px;
   color: var(--color-text);

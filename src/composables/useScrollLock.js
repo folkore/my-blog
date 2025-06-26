@@ -26,9 +26,16 @@ export function useScrollLock() {
     }
   }
 
+  const cleanup = () => {
+    if (isLocked.value) {
+      unlock()
+    }
+  }
+
   return {
     isLocked,
     lock,
-    unlock
+    unlock,
+    cleanup
   }
-} 
+}

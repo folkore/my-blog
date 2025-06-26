@@ -63,7 +63,6 @@ const openSearch = () => {
   --color-success-rgb: 16, 185, 129;
 
   /* 布局尺寸 */
-  --header-height: 72px;
   --header-height-mobile: 64px;
   --content-width: 1200px;
   --nav-link-size: 0.875rem;
@@ -132,6 +131,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color var(--transition-normal) var(--bezier-smooth);
+  overflow-x: hidden; /* 防止横向滚动条 */
 }
 
 .container {
@@ -161,7 +161,7 @@ body {
 /* 主要内容区域 */
 .main {
   flex: 1;
-  margin-top: var(--header-height);
+  /* margin-top: var(--header-height); */
   background-color: var(--color-background);
   position: relative;
   z-index: 1;
@@ -629,24 +629,6 @@ body {
   .desktop-lang {
     display: none;
   }
-}
-
-/* 头部导航样式 */
-.header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: var(--nav-height);
-  z-index: 100;
-  transition: all 0.3s ease;
-  background: var(--nav-background);
-  backdrop-filter: blur(var(--blur-strength));
-  -webkit-backdrop-filter: blur(var(--blur-strength));
-}
-
-.dark-theme .header {
-  background: var(--nav-background-dark);
 }
 
 .header-scrolled {

@@ -153,7 +153,7 @@ watch(
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: var(--color-secondary-background);
+  background: transparent;
   border: 1px solid var(--color-border);
   color: var(--color-text);
   border-radius: 12px;
@@ -170,7 +170,7 @@ watch(
 
 /* 按钮悬停效果 */
 .lang-dropdown-toggle:hover {
-  background: var(--color-tertiary-background);
+  background: var(--color-hover-background);
   border-color: var(--color-primary);
   transform: translateY(-1px);
   box-shadow:
@@ -325,7 +325,7 @@ watch(
 
 /* 深色模式适配 */
 .dark-theme .lang-dropdown-toggle {
-  background: var(--color-secondary-background);
+  background: transparent;
   border-color: var(--color-border);
   color: var(--color-text);
 }
