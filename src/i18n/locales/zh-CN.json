@@ -23,6 +23,8 @@
     "placeholder": "输入关键词搜索文章...",
     "empty": "未找到匹配的内容",
     "tip": "开始输入以搜索博客内容",
+    "starSearch": "在星河中寻找你的故事...",
+    "openPanel": "打开搜索面板",
     "shortcut": {
       "navigate": "切换结果",
       "select": "打开所选结果",
@@ -45,6 +47,13 @@
   "blog": {
     "title": "博客文章",
     "description": "分享技术见解和开发经验",
+    "riverTitle": "时光之河",
+    "riverSubtitle": "在时间的长河中，每个故事都是珍贵的记忆",
+    "riverLoading": "时光正在汇聚...",
+    "riverNoResults": "这片时空还没有相关的故事...",
+    "allTime": "全部时间",
+    "selectTimeRange": "选择时间范围",
+    "timeNavigation": "时间导航",
     "readMore": "阅读更多",
     "backToList": "返回文章列表",
     "publishedOn": "发布于",
@@ -94,7 +103,9 @@
       "clearAll": "清除所有",
       "expand": "展开标签",
       "collapse": "收起标签"
-    }
+    },
+    "clearAll": "清除",
+    "activeFilters": "当前筛选"
   },
   "pagination": {
     "prev": "上一页",
@@ -152,5 +163,12 @@
   },
   "error": {
     "title": "发生错误"
+  },
+  "common": {
+    "close": "关闭",
+    "open": "打开",
+    "loading": "加载中...",
+    "error": "出错了",
+    "retry": "重试"
   }
-} 
+}
