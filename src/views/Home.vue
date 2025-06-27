@@ -37,41 +37,26 @@
             <span class="brand-name">folklore</span
             >。<br />我时常潜入名为"自我"的静寂深海，投下一枚名为"思考"的石子，只为观察那荡开的，名为"理解"的涟漪。这里陈列的，便是我拾起的，一些被浪花冲刷上岸的贝壳。<br />若你恰好路过，愿其中一枚，能让你听见海的声音。
           </p>
-          <div class="hero-buttons">
-            <router-link to="/blog" class="hero-button primary">
-              <span class="button-text">进入博客</span>
-              <span class="button-icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                  <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-              </span>
+          <div class="hero-links">
+            <router-link to="/blog" class="natural-link ocean-ripple">
+              <div class="link-surface">
+                <div class="link-glow"></div>
+                <div class="link-content">
+                  <span class="link-text">进入博客</span>
+                  <span class="link-desc">探索思想的深海</span>
+                </div>
+                <div class="surface-pattern ocean-pattern"></div>
+              </div>
             </router-link>
-            <router-link to="/about" class="hero-button secondary">
-              <span class="button-text">关于我</span>
-              <span class="button-icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="16"></line>
-                  <line x1="8" y1="12" x2="16" y2="12"></line>
-                </svg>
-              </span>
+            <router-link to="/about" class="natural-link sand-drift">
+              <div class="link-surface">
+                <div class="link-glow"></div>
+                <div class="link-content">
+                  <span class="link-text">关于我</span>
+                  <span class="link-desc">沙滩上的足迹</span>
+                </div>
+                <div class="surface-pattern sand-pattern"></div>
+              </div>
             </router-link>
           </div>
           <div class="hero-social">
@@ -943,22 +928,17 @@ onMounted(() => {
     // 确保之前的ResizeObserver已经清理
     if (resizeObserver) {
       resizeObserver.disconnect();
-      resizeObserver = null;
     }
 
+    let resizeTimer;
     resizeObserver = new ResizeObserver(() => {
-      // 添加防抖，避免频繁触发
-      if (resizeObserver && resizeObserver.timeout) {
-        clearTimeout(resizeObserver.timeout);
-      }
-      if (resizeObserver) {
-        resizeObserver.timeout = setTimeout(() => {
-          if (containerRef.value && canvasRef.value) {
-            setSize();
-            initCanvas();
-          }
-        }, 100);
-      }
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (containerRef.value && canvasRef.value) {
+          setSize();
+          initCanvas();
+        }
+      }, 150); // 增加防抖延迟以提高稳定性
     });
 
     if (containerRef.value) {
@@ -1334,96 +1314,284 @@ watch(
   border-radius: 2px;
 }
 
-.hero-buttons {
+.hero-links {
   display: flex;
-  gap: 1.5rem;
+  gap: 2.5rem;
   justify-content: flex-start;
   animation: fadeInUp 0.8s ease-out 0.6s both;
 }
-.hero-button {
+
+.natural-link {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 0.85rem 1.75rem;
-  border-radius: var(--radius-full);
-  font-weight: 600;
-  font-size: 1.1rem;
   text-decoration: none;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  color: inherit;
+  transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 1;
+}
+
+.link-surface {
+  position: relative;
+  width: 180px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
-  z-index: 1;
+  transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  cursor: pointer;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
-.button-text {
-  position: relative;
-  z-index: 2;
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.button-icon {
-  position: relative;
-  z-index: 2;
-  width: 20px;
-  height: 20px;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  opacity: 0.8;
-}
-.hero-button.primary {
-  background: linear-gradient(
-    135deg,
-    var(--color-primary) 0%,
-    var(--color-primary-light) 100%
+
+.link-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 30%,
+    transparent 70%
   );
-  color: white;
-  box-shadow: 0 10px 20px -10px rgba(var(--color-primary-rgb), 0.5);
+  opacity: 0;
+  transition: all 1s ease;
+  pointer-events: none;
 }
-.hero-button.primary::before {
-  content: "";
+
+.link-content {
+  position: relative;
+  z-index: 3;
+  padding: 24px 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.link-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 4px;
+  transition: all 0.6s ease;
+  letter-spacing: 0.02em;
+}
+
+.link-desc {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.65);
+  font-weight: 400;
+  transition: all 0.6s ease;
+  line-height: 1.4;
+}
+
+.surface-pattern {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  bottom: 0;
+  opacity: 0.4;
+  transition: all 0.8s ease;
+  pointer-events: none;
+}
+
+/* 自然悬停效果 */
+.natural-link:hover .link-surface {
+  transform: translateY(-6px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.natural-link:hover .link-glow {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.natural-link:hover .link-text {
+  color: rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+}
+
+.natural-link:hover .link-desc {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.natural-link:hover .surface-pattern {
+  opacity: 0.7;
+  transform: scale(1.05);
+}
+
+/* 海洋主题 */
+.ocean-ripple .link-surface {
   background: linear-gradient(
     135deg,
-    var(--color-primary-light) 0%,
-    var(--color-primary) 100%
+    rgba(63, 136, 197, 0.08) 0%,
+    rgba(44, 93, 138, 0.12) 50%,
+    rgba(26, 56, 82, 0.15) 100%
   );
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  z-index: 1;
+  border-color: rgba(63, 136, 197, 0.15);
+  box-shadow:
+    0 4px 20px rgba(63, 136, 197, 0.1),
+    inset 0 1px 0 rgba(91, 163, 224, 0.2);
 }
-.hero-button.primary:hover::before {
-  opacity: 1;
+
+.ocean-ripple:hover .link-surface {
+  background: linear-gradient(
+    135deg,
+    rgba(63, 136, 197, 0.15) 0%,
+    rgba(44, 93, 138, 0.18) 50%,
+    rgba(26, 56, 82, 0.22) 100%
+  );
+  border-color: rgba(63, 136, 197, 0.25);
+  box-shadow:
+    0 12px 40px rgba(63, 136, 197, 0.2),
+    inset 0 1px 0 rgba(91, 163, 224, 0.3);
 }
-.hero-button.secondary {
-  background: rgba(var(--color-tertiary-background-rgb), 0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: var(--color-text);
-  border: 1px solid rgba(var(--color-border-rgb), 0.2);
+
+.ocean-pattern {
+  background:
+    radial-gradient(
+      circle at 20% 80%,
+      rgba(91, 163, 224, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(63, 136, 197, 0.08) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 40% 40%,
+      rgba(26, 56, 82, 0.05) 0%,
+      transparent 50%
+    );
 }
-.hero-button.secondary::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(var(--color-primary-rgb), 0.05);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  z-index: 1;
+
+.ocean-ripple .link-glow {
+  background: radial-gradient(
+    circle at center,
+    rgba(91, 163, 224, 0.15) 0%,
+    rgba(63, 136, 197, 0.08) 30%,
+    transparent 70%
+  );
 }
-.hero-button.secondary:hover::before {
-  opacity: 1;
+
+/* 沙滩主题 */
+.sand-drift .link-surface {
+  background: linear-gradient(
+    135deg,
+    rgba(232, 226, 214, 0.08) 0%,
+    rgba(212, 200, 176, 0.12) 50%,
+    rgba(176, 140, 60, 0.15) 100%
+  );
+  border-color: rgba(212, 200, 176, 0.15);
+  box-shadow:
+    0 4px 20px rgba(212, 200, 176, 0.1),
+    inset 0 1px 0 rgba(232, 226, 214, 0.2);
 }
-.hero-button:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px -10px rgba(var(--color-primary-rgb), 0.3);
+
+.sand-drift:hover .link-surface {
+  background: linear-gradient(
+    135deg,
+    rgba(232, 226, 214, 0.15) 0%,
+    rgba(212, 200, 176, 0.18) 50%,
+    rgba(176, 140, 60, 0.22) 100%
+  );
+  border-color: rgba(212, 200, 176, 0.25);
+  box-shadow:
+    0 12px 40px rgba(212, 200, 176, 0.2),
+    inset 0 1px 0 rgba(232, 226, 214, 0.3);
 }
-.hero-button:hover .button-icon {
-  transform: translateX(4px);
+
+.sand-pattern {
+  background:
+    radial-gradient(
+      circle at 30% 70%,
+      rgba(232, 226, 214, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 70% 30%,
+      rgba(212, 200, 176, 0.08) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(176, 140, 60, 0.05) 0%,
+      transparent 50%
+    );
+}
+
+.sand-drift .link-glow {
+  background: radial-gradient(
+    circle at center,
+    rgba(232, 226, 214, 0.15) 0%,
+    rgba(212, 200, 176, 0.08) 30%,
+    transparent 70%
+  );
+}
+
+/* 深色主题适配 */
+.hero.is-sunset .ocean-ripple .link-surface {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 63, 99, 0.12) 0%,
+    rgba(36, 51, 74, 0.15) 50%,
+    rgba(30, 37, 58, 0.18) 100%
+  );
+  border-color: rgba(104, 75, 113, 0.2);
+  box-shadow:
+    0 4px 20px rgba(59, 63, 99, 0.15),
+    inset 0 1px 0 rgba(138, 124, 168, 0.25);
+}
+
+.hero.is-sunset .ocean-ripple:hover .link-surface {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 63, 99, 0.18) 0%,
+    rgba(36, 51, 74, 0.22) 50%,
+    rgba(30, 37, 58, 0.25) 100%
+  );
+  border-color: rgba(104, 75, 113, 0.3);
+  box-shadow:
+    0 12px 40px rgba(59, 63, 99, 0.25),
+    inset 0 1px 0 rgba(138, 124, 168, 0.35);
+}
+
+.hero.is-sunset .sand-drift .link-surface {
+  background: linear-gradient(
+    135deg,
+    rgba(200, 162, 115, 0.12) 0%,
+    rgba(165, 112, 85, 0.15) 50%,
+    rgba(139, 115, 85, 0.18) 100%
+  );
+  border-color: rgba(200, 162, 115, 0.2);
+  box-shadow:
+    0 4px 20px rgba(200, 162, 115, 0.15),
+    inset 0 1px 0 rgba(232, 226, 214, 0.25);
+}
+
+.hero.is-sunset .sand-drift:hover .link-surface {
+  background: linear-gradient(
+    135deg,
+    rgba(200, 162, 115, 0.18) 0%,
+    rgba(165, 112, 85, 0.22) 50%,
+    rgba(139, 115, 85, 0.25) 100%
+  );
+  border-color: rgba(200, 162, 115, 0.3);
+  box-shadow:
+    0 12px 40px rgba(200, 162, 115, 0.25),
+    inset 0 1px 0 rgba(232, 226, 214, 0.35);
 }
 
 .hero-social {
@@ -1596,7 +1764,7 @@ watch(
     max-width: 100%;
     text-align: center;
   }
-  .hero-buttons,
+  .hero-links,
   .hero-social {
     justify-content: center;
   }
@@ -1613,12 +1781,53 @@ watch(
   .hero-description {
     font-size: 1rem;
   }
-  .hero-buttons {
+  .hero-links {
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
+    align-items: center;
   }
-  .hero-button {
+
+  .natural-link {
     width: 100%;
+    max-width: 300px;
+  }
+
+  .link-surface {
+    width: 100%;
+    height: 90px;
+  }
+
+  .latest-posts {
+    padding: 4rem 0;
+  }
+
+  .section-title {
+    text-align: center;
+  }
+
+  .section-title::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .post-item {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 2rem 0;
+  }
+
+  .post-item-content {
+    width: 100%;
+  }
+
+  .post-item-image-wrapper {
+    width: 100%;
+    order: -1;
+    margin-bottom: 1rem;
+  }
+
+  .post-item-title {
+    font-size: 1.25rem;
   }
 }
 

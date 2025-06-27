@@ -305,6 +305,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: var(--header-height);
+  width: 100vw;
   background: transparent;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);

@@ -2,7 +2,6 @@
 import { ref, onMounted, computed, watch, onUnmounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import SearchBar from "../components/SearchBar.vue";
-import TagFilter from "../components/TagFilter.vue";
 import { usePostsStore } from "../store";
 import { useSearch } from "../composables/useSearch";
 
@@ -287,7 +286,6 @@ watch(selectedTags, (val, oldVal) => {
                 &times;
               </button>
             </div>
-            <TagFilter :tags="allTags" v-model:selectedTags="selectedTags" />
 
             <!-- 移动端底部关闭按钮 -->
             <div class="panel-footer-mobile">
@@ -316,6 +314,7 @@ watch(selectedTags, (val, oldVal) => {
   margin: 0 auto;
   overflow-x: hidden;
   padding: 0 24px;
+  margin-top: var(--header-height);
 }
 
 /* 页面头部 */
