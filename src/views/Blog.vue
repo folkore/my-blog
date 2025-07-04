@@ -1,7 +1,7 @@
 <script setup>
-import TimeRiverBlog from "../components/TimeRiverBlog.vue";
+import ModernBlogList from "../components/ModernBlogList.vue";
 </script>
 
 <template>
-  <TimeRiverBlog />
+  <ModernBlogList />
 </template>

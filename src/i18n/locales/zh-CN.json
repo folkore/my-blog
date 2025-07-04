@@ -46,7 +46,14 @@
   },
   "blog": {
     "title": "博客文章",
+    "subtitle": "探索知识的海洋，分享思想的火花",
     "description": "分享技术见解和开发经验",
+    "searchPlaceholder": "搜索文章...",
+    "tagsFilter": "标签筛选",
+    "selectTags": "选择标签",
+    "clearAll": "清除全部",
+    "applyFilters": "应用筛选",
+    "clearFilters": "清除筛选",
     "riverTitle": "时光之河",
     "riverSubtitle": "在时间的长河中，每个故事都是珍贵的记忆",
     "riverLoading": "时光正在汇聚...",
@@ -76,6 +83,7 @@
     "commentSuccess": "评论提交成功！",
     "commentError": "提交评论失败",
     "noResults": "未找到相关文章",
+    "noResultsDesc": "没有找到符合条件的文章，试试其他关键词吧",
     "shareVia": {
       "twitter": "分享到Twitter",
       "facebook": "分享到Facebook",

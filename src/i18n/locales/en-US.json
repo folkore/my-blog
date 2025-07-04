@@ -44,7 +44,14 @@
     },
     "blog": {
       "title": "Blog Posts",
+      "subtitle": "Explore the ocean of knowledge, share the spark of thoughts",
       "description": "Sharing technical insights and development experiences",
+      "searchPlaceholder": "Search articles...",
+      "tagsFilter": "Filter by Tags",
+      "selectTags": "Select Tags",
+      "clearAll": "Clear All",
+      "applyFilters": "Apply Filters",
+      "clearFilters": "Clear Filters",
       "readMore": "Read More",
       "backToList": "Back to Articles",
       "publishedOn": "Published on",
@@ -67,6 +74,7 @@
       "commentSuccess": "Comment submitted successfully!",
       "commentError": "Failed to submit comment",
       "noResults": "No articles found",
+      "noResultsDesc": "No articles matching your criteria were found. Try different keywords.",
       "shareVia": {
         "twitter": "Share on Twitter",
         "facebook": "Share on Facebook",
@@ -94,7 +102,9 @@
         "clearAll": "Clear All",
         "expand": "Show Tags",
         "collapse": "Hide Tags"
-      }
+      },
+      "clearAll": "Clear",
+      "activeFilters": "Active Filters"
     },
     "pagination": {
       "prev": "Previous",
@@ -136,7 +146,10 @@
       "error": "Error",
       "success": "Success",
       "warning": "Warning",
-      "info": "Info"
+      "info": "Info",
+      "close": "Close",
+      "open": "Open",
+      "retry": "Retry"
     },
     "footer": {
       "navigation": "Navigation",
@@ -153,4 +166,4 @@
     "error": {
       "title": "An Error Occurred"
     }
-  } 
+  }

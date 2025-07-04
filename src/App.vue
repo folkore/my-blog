@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import { useRoute } from "vue-router";
 import BackToTop from "./components/BackToTop.vue";
-import ReadingProgress from "./components/ReadingProgress.vue";
+import ReadingProgressNotification from "./components/ReadingProgressNotification.vue";
 import PageTransition from "./components/PageTransition.vue";
 import HeaderMenu from "./components/HeaderMenu.vue";
 import GlobalSearch from "./components/GlobalSearch.vue";

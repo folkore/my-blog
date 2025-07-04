@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import ReadingProgress from "../components/ReadingProgress.vue";
 import ReadingProgressNotification from "../components/ReadingProgressNotification.vue";
 import BookmarkButton from "../components/BookmarkButton.vue";
 import ShareButtons from "../components/ShareButtons.vue";
@@ -290,9 +289,6 @@ watch(
 
 <template>
   <div class="blog-post-page">
-    <!-- 文章专用阅读进度条 -->
-    <ReadingProgress v-if="blogPost" target=".blog-post-content" />
-
     <!-- 继续阅读提示 -->
     <ReadingProgressNotification
       v-if="showProgressNotification && savedProgress"

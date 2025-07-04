@@ -59,7 +59,8 @@
               </div>
             </router-link>
           </div>
-          <div class="hero-social">
+          <!-- 社交链接 - 移动端隐藏 -->
+          <div class="hero-social desktop-only">
             <a
               href="https://github.com"
               target="_blank"
@@ -1771,30 +1772,133 @@ watch(
 }
 
 @media (max-width: 768px) {
+  /* 移动端隐藏社交链接 */
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* 修复移动端Hero区域被头部遮挡的问题 */
+  .hero {
+    min-height: 100vh; /* 改为最小高度，允许内容超出时自然扩展 */
+    /* 移除固定高度和overflow hidden，让页面自然滚动 */
+    position: relative; /* 确保定位上下文 */
+  }
+
+  .hero-container {
+    padding: 2rem 1rem 3rem 1rem; /* 增加底部内边距 */
+    gap: 1.5rem; /* 减少间距以节省空间 */
+    /* 添加顶部边距来避免被固定头部遮挡 */
+    padding-top: calc(
+      var(--header-height-mobile, 64px) + 1rem
+    ); /* 减少顶部间距 */
+    /* 使用全高度，让内容自然流动 */
+    min-height: 100vh;
+    box-sizing: border-box;
+    /* 移除内部滚动，让页面级别处理滚动 */
+    overflow: visible;
+  }
+
+  .hero-content {
+    padding: 0.5rem 0; /* 减少内边距 */
+  }
+
   .hero-title {
     font-size: 2.2rem;
+    margin-bottom: 1rem; /* 控制标题底部间距 */
+    /* 增强移动端文字对比度 */
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    color: rgba(255, 255, 255, 0.95);
   }
   .hero-subtitle {
     font-size: 1.2rem;
     height: 1.6rem;
+    margin-bottom: 1rem; /* 控制副标题底部间距 */
+    /* 增强移动端文字对比度 */
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+    color: rgba(255, 255, 255, 0.9);
   }
   .hero-description {
     font-size: 1rem;
+    margin: 1rem 0; /* 减少上下边距 */
+    line-height: 1.6; /* 优化行高 */
+    /* 增强移动端文字对比度 */
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500; /* 稍微加粗以提高可读性 */
   }
   .hero-links {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.2rem; /* 减少间距 */
     align-items: center;
+    margin: 1.5rem 0; /* 减少上下边距 */
+  }
+
+  /* 确保社交链接区域紧凑显示 */
+  .hero-social {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* 优化移动端滚动指示器 */
+  .scroll-indicator {
+    bottom: 20px; /* 调整位置 */
+    color: rgba(255, 255, 255, 0.8);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+
+  .scroll-text {
+    font-size: 0.85rem;
+    font-weight: 600; /* 加粗以提高可读性 */
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  /* 优化链接按钮的高度 */
+  .natural-link {
+    margin-bottom: 0.8rem; /* 减少底部间距 */
   }
 
   .natural-link {
     width: 100%;
     max-width: 300px;
+    margin-bottom: 0.8rem; /* 减少底部间距 */
   }
 
   .link-surface {
     width: 100%;
-    height: 90px;
+    height: 75px; /* 减少高度以节省空间 */
+    font-size: 0.95rem; /* 稍微减小字体 */
+  }
+
+  /* 针对极小屏幕的额外优化 */
+  @media (max-height: 700px) {
+    .hero-container {
+      gap: 1rem; /* 进一步减少间距 */
+      padding-top: calc(
+        var(--header-height-mobile, 64px) + 1.5rem
+      ); /* 减少顶部内边距 */
+      padding-bottom: 2rem; /* 减少底部内边距 */
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    .hero-title {
+      font-size: 2rem; /* 减小标题字体 */
+      margin-bottom: 0.8rem;
+    }
+
+    .hero-description {
+      margin: 0.8rem 0;
+    }
+
+    .hero-links {
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .link-surface {
+      height: 65px; /* 进一步减少高度 */
+      font-size: 0.9rem;
+    }
   }
 
   .latest-posts {
